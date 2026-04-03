@@ -147,7 +147,7 @@ export function PricingSection({ onSignUp }: PricingProps) {
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginBottom: 10 }}>
                 Or experience AImie before you sign up:
               </p>
-              <a href="tel:+18146322907" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <a href="tel:+61240727152" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                 <div style={{
                   width: 7, height: 7, borderRadius: '50%',
                   background: '#22c55e',
@@ -156,7 +156,7 @@ export function PricingSection({ onSignUp }: PricingProps) {
                 }} />
                 <Phone size={14} color="#0ea5e9" />
                 <span style={{ fontFamily: `var(--font-geist-mono, monospace)`, fontWeight: 700, color: 'white', fontSize: 16 }}>
-                  +1 (814) 632-2907
+                  +61 2 4072 7152
                 </span>
               </a>
             </div>

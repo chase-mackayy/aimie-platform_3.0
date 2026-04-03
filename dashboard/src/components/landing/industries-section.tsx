@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { UtensilsCrossed, Scissors, Heart, Activity, Wrench, Sparkles } from 'lucide-react';
+import { UtensilsCrossed, Scissors, Heart, Activity, Wrench, Sparkles, Building2 } from 'lucide-react';
 
 interface CallLine {
   speaker: 'ai' | 'caller' | 'system';
@@ -179,6 +179,33 @@ const INDUSTRIES: Industry[] = [
       { speaker: 'caller', text: "Priya, 0411 222 333." },
       { speaker: 'ai',     text: "See you Saturday at 11am, Priya! We'll send you our current nail art catalogue tonight so you can pick your design." },
       { speaker: 'system', text: "✓ Appointment booked · Nail art catalogue SMS sent" },
+    ],
+  },
+  {
+    id: 'hotels',
+    label: 'Hotels',
+    icon: Building2,
+    heading: 'Hotels & Accommodation',
+    subheading: 'Your front desk, always staffed.',
+    bullets: [
+      'Handles reservation inquiries 24/7',
+      'Room type & availability questions',
+      'Check-in / check-out information',
+      'Concierge & local recommendations',
+      'Directs maintenance & housekeeping requests',
+      'Manages group & function bookings',
+    ],
+    stat: 'Hotels reduce front desk call volume by 58% with AImie',
+    callTitle: '📞 Incoming call · The Langham Melbourne · 11:22 PM',
+    call: [
+      { speaker: 'ai',     text: "Good evening, thank you for calling The Langham Melbourne. I'm AImie — how may I assist you?" },
+      { speaker: 'caller', text: "Hi, I'd like to book a room for two nights, checking in Friday." },
+      { speaker: 'ai',     text: "Of course! We have a Deluxe King room available Friday and Saturday — would that suit, or would you prefer a suite?" },
+      { speaker: 'caller', text: "The Deluxe King sounds perfect." },
+      { speaker: 'ai',     text: "Wonderful. Can I take your name and email to hold the reservation?" },
+      { speaker: 'caller', text: "Sarah Mitchell, sarah@email.com." },
+      { speaker: 'ai',     text: "All set, Sarah! Your Deluxe King is reserved for Friday and Saturday. You'll receive a confirmation email within a few minutes. We look forward to welcoming you." },
+      { speaker: 'system', text: "✓ Reservation created · Confirmation email sent to sarah@email.com" },
     ],
   },
 ];

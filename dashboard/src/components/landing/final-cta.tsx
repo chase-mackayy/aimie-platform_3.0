@@ -106,7 +106,7 @@ export function FinalCTA({ onSignUp }: FinalCTAProps) {
             Start Free Trial →
           </button>
           <a
-            href="tel:+18146322907"
+            href="tel:+61240727152"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -131,7 +131,7 @@ export function FinalCTA({ onSignUp }: FinalCTAProps) {
             }}
           >
             <Phone size={16} color="#0ea5e9" />
-            Call AImie Now: +1 (814) 632-2907
+            Call AImie Now: +61 2 4072 7152
           </a>
         </div>
       </div>

@@ -14,18 +14,16 @@ export function Footer() {
     {
       heading: 'Company',
       links: [
-        { label: 'About',    href: '#'                                },
-        { label: 'Blog',     href: '#'                                },
-        { label: 'Careers',  href: '#'                                },
-        { label: 'Contact',  href: 'mailto:hello@aimiesolutions.com.au' },
+        { label: 'Contact Us',  href: 'mailto:hello@aimiesolutions.com.au' },
+        { label: 'Call Us',     href: 'tel:+61240727152'                   },
       ],
     },
     {
       heading: 'Legal',
       links: [
-        { label: 'Privacy Policy',    href: '#' },
-        { label: 'Terms of Service',  href: '#' },
-        { label: 'Security',          href: '#' },
+        { label: 'Privacy Policy',    href: '/privacy' },
+        { label: 'Terms of Service',  href: '/terms'   },
+        { label: 'Security',          href: 'mailto:hello@aimiesolutions.com.au' },
       ],
     },
   ];
@@ -94,18 +92,18 @@ export function Footer() {
         {/* Bottom row */}
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>
-            © 2026 AImie Solutions Pty Ltd · All rights reserved · ABN XX XXX XXX XXX
+            © 2026 AImie Solutions Pty Ltd · All rights reserved · ABN 24 690 118 275
           </p>
           <div style={{ display: 'flex', gap: 20 }}>
-            {['Privacy Policy', 'Terms of Service'].map((l) => (
+            {[{ label: 'Privacy Policy', href: '/privacy' }, { label: 'Terms of Service', href: '/terms' }].map((l) => (
               <a
-                key={l}
-                href="#"
+                key={l.label}
+                href={l.href}
                 style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', transition: 'color 0.15s' }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
               >
-                {l}
+                {l.label}
               </a>
             ))}
           </div>
