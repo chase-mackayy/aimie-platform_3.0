@@ -190,10 +190,10 @@ export default function HealthcarePage() {
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
             {[
-              { label: 'Hardware (one-time)', value: '$499 AUD' },
               { label: 'Monthly subscription', value: '$599/mo' },
               { label: 'Compliance package', value: '+$199/mo' },
               { label: 'Annual cost total', value: '~$9,576' },
+              { label: 'vs. receptionist salary', value: '$65,000/yr' },
             ].map(({ label, value }) => (
               <div key={label}>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
@@ -384,8 +384,7 @@ export default function HealthcarePage() {
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'white', marginBottom: 48 }}>Healthcare pricing</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
             {[
-              { title: 'Hardware', price: '$499', period: 'one-time', desc: 'AImie Hub device. Ships to your clinic, installs in 20 minutes.', color: '#a78bfa', features: ['Raspberry Pi 5 · 8GB RAM', '128GB NVMe storage', '4G LTE + Wi-Fi 6', '2-year hardware warranty'] },
-              { title: 'Subscription', price: '$599', period: '/month AUD', desc: 'Full AI receptionist service with healthcare-grade configuration.', color: '#22c55e', features: ['Unlimited inbound calls', 'Patient identity verification', 'All clinic integrations', 'Victoria-based support'] },
+              { title: 'Subscription', price: '$599', period: '/month AUD', desc: 'Full AI receptionist service with healthcare-grade on-premise configuration.', color: '#22c55e', features: ['Unlimited inbound calls', 'Patient identity verification', 'All clinic integrations', 'Victoria-based support'] },
               { title: 'Compliance Pack', price: '$199', period: '/month AUD', desc: 'Enhanced compliance monitoring, audit logs, and reporting.', color: '#0ea5e9', features: ['Full audit trail', 'Compliance reporting', 'Monthly privacy review', 'Incident response SLA'] },
             ].map(({ title, price, period, desc, color, features }) => (
               <div key={title} style={{ background: '#0f0f0f', border: `1px solid ${color}20`, borderRadius: 20, padding: 28, textAlign: 'left' }}>
