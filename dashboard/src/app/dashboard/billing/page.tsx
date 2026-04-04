@@ -31,7 +31,7 @@ const PLAN_FEATURES = [
   'Custom voice & personality',
   'Call transcripts & summaries',
   'Email & SMS notifications',
-  'Melbourne-based support',
+  'Victoria-based support',
   'Advanced analytics dashboard',
 ];
 
@@ -285,7 +285,7 @@ export default function BillingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="electric-card rounded-xl p-5 bg-[#0d1117]">
             <h4 className="font-semibold text-[#f0f9ff] mb-1">Billing questions?</h4>
-            <p className="text-sm text-[#64748b] mb-3">Our Melbourne-based team is here to help with any billing or payment queries.</p>
+            <p className="text-sm text-[#64748b] mb-3">Our Ballarat-based team is here to help with any billing or payment queries.</p>
             <a href="mailto:billing@aimiesolutions.com" className="text-sm text-[#0ea5e9] hover:text-[#38bdf8] transition-colors flex items-center gap-1">
               billing@aimiesolutions.com <ArrowRight className="h-3.5 w-3.5" />
             </a>

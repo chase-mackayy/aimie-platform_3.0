@@ -12,10 +12,17 @@ interface NavbarProps {
 export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
   const [visible, setVisible] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 50);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 48);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
   }, []);
 
   // Close mobile menu on resize to desktop
@@ -25,7 +32,7 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  const navLinks = ['Features', 'Industries', 'Pricing', 'How it Works'];
+  const navLinks = ['Features', 'Industries', 'Pricing', 'Healthcare'];
 
   return (
     <>
@@ -33,12 +40,14 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
         className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between"
         style={{
           padding: '0 clamp(16px, 3vw, 40px)',
-          background: 'rgba(10,10,10,0.72)',
+          background: scrolled ? 'rgba(5,5,5,0.97)' : 'rgba(10,10,10,0.6)',
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.04)',
+          boxShadow: scrolled ? '0 8px 40px rgba(0,0,0,0.5)' : 'none',
           opacity: visible ? 1 : 0,
-          transition: 'opacity 0.4s ease',
+          transform: visible ? 'translateY(0)' : 'translateY(-8px)',
+          transition: 'opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1), background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
         }}
       >
         {/* Logo */}
@@ -56,10 +65,18 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
         {/* Center nav — desktop */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((l) => (
-            <a key={l} href={`#${l.toLowerCase().replace(/ /g, '-')}`} className="nav-link">
+            <a
+              key={l}
+              href={l === 'Healthcare' ? '/healthcare' : `#${l.toLowerCase().replace(/ /g, '-')}`}
+              className="nav-link"
+            >
               {l}
             </a>
           ))}
+          <a href="/marketplace" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            Marketplace
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#0ea5e9', background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.25)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.04em' }}>NEW</span>
+          </a>
         </div>
 
         {/* Right — desktop */}
@@ -136,13 +153,16 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
           {navLinks.map((l) => (
             <a
               key={l}
-              href={`#${l.toLowerCase().replace(/ /g, '-')}`}
+              href={l === 'Healthcare' ? '/healthcare' : `#${l.toLowerCase().replace(/ /g, '-')}`}
               onClick={() => setMobileOpen(false)}
               style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
             >
               {l}
             </a>
           ))}
+          <a href="/marketplace" onClick={() => setMobileOpen(false)} style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            Marketplace <span style={{ fontSize: 10, fontWeight: 700, color: '#0ea5e9', background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 4, padding: '1px 6px' }}>NEW</span>
+          </a>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 8 }}>
             <button
               onClick={() => { onSignIn(); setMobileOpen(false); }}

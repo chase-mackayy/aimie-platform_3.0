@@ -141,7 +141,7 @@ export default function DashboardPage() {
           </div>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: 'white', marginBottom: 10 }}>You&apos;re all set!</h3>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, maxWidth: 440, margin: '0 auto 24px' }}>
-            We&apos;ve received your details. Our Melbourne team will be in touch within <strong style={{ color: 'white' }}>24 hours</strong> to begin training AImie on your business.
+            We&apos;ve received your details. Our Ballarat-based team will be in touch within <strong style={{ color: 'white' }}>24 hours</strong> to begin training AImie on your business.
           </p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
             <Clock size={13} />
@@ -302,7 +302,7 @@ export default function DashboardPage() {
             <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white' }}>Questions?</h3>
           </div>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, marginBottom: 16 }}>
-            Our Melbourne-based team is ready to help. Reach out and we&apos;ll get back to you fast.
+            Our Ballarat-based team is ready to help. Reach out and we&apos;ll get back to you fast.
           </p>
           <a href="mailto:hello@aimiesolutions.com.au" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#a78bfa', textDecoration: 'none' }}>
             hello@aimiesolutions.com.au <ArrowRight size={13} />

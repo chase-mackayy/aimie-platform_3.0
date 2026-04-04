@@ -11,7 +11,7 @@ const FEATURES = [
   'SMS confirmation sending',
   'Real-time dashboard',
   'Australian phone number',
-  'Melbourne-based support',
+  'Victoria-based support',
   '14-day free trial',
   'No setup fees',
   'Cancel anytime',
@@ -174,7 +174,7 @@ export function PricingSection({ onSignUp }: PricingProps) {
               padding: 20,
             }}>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: 0 }}>
-                💡 The average Melbourne restaurant misses 30+ calls per week at ~$80 per table. That&apos;s{' '}
+                💡 The average Australian restaurant misses 30+ calls per week at ~$80 per table. That&apos;s{' '}
                 <strong style={{ color: 'white' }}>$2,400+/month</strong> in lost revenue. AImie costs $299.
               </p>
             </div>

@@ -67,7 +67,7 @@ export function FinalCTA({ onSignUp }: FinalCTAProps) {
             animation: 'pulse-dot 2s ease-in-out infinite',
           }} />
           <span style={{ fontSize: 11, color: '#0ea5e9', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Join hundreds of Australian businesses
+            Be among the first in Australia
           </span>
         </div>
 
@@ -85,7 +85,7 @@ export function FinalCTA({ onSignUp }: FinalCTAProps) {
         </h2>
 
         <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, marginBottom: 48 }}>
-          Join Melbourne businesses using AImie to capture every call, every booking, every dollar.
+          Join Australian businesses using AImie to capture every call, every booking, every dollar.
         </p>
 
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>

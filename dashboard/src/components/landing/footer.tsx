@@ -9,6 +9,8 @@ export function Footer() {
         { label: 'Pricing',       href: '#pricing'      },
         { label: 'How it Works',  href: '#how-it-works' },
         { label: 'Industries',    href: '#industries'   },
+        { label: 'Healthcare',    href: '/healthcare'   },
+        { label: 'Marketplace',   href: '/marketplace'  },
       ],
     },
     {
@@ -47,6 +49,15 @@ export function Footer() {
             <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginTop: 8, maxWidth: 220, lineHeight: 1.6 }}>
               Your AI receptionist, always on.
             </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 16 }}>
+              {[
+                '🇦🇺 Australian owned & operated',
+                '🏢 ABN 24 690 118 275',
+                '📍 Ballarat, Victoria',
+              ].map((item) => (
+                <div key={item} style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>{item}</div>
+              ))}
+            </div>
           </div>
 
           {/* Right: link columns */}
@@ -85,7 +96,7 @@ export function Footer() {
         {/* Middle row */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-            Made in Melbourne 🇦🇺 · Powered by LiveKit, Deepgram &amp; ElevenLabs
+            Proudly Australian 🇦🇺 · Made in Ballarat, VIC · Powered by LiveKit, Deepgram &amp; ElevenLabs
           </p>
         </div>
 

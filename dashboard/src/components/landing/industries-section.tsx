@@ -254,6 +254,7 @@ function CallBubble({ line }: { line: CallLine }) {
 export function IndustriesSection() {
   const [active, setActive] = useState('hospitality');
   const [contentKey, setContentKey] = useState(0);
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
   const ref = useRef<HTMLDivElement>(null);
 
   const industry = INDUSTRIES.find((i) => i.id === active)!;
@@ -276,6 +277,9 @@ export function IndustriesSection() {
   }, []);
 
   const handleTabChange = (id: string) => {
+    const oldIdx = INDUSTRIES.findIndex((i) => i.id === active);
+    const newIdx = INDUSTRIES.findIndex((i) => i.id === id);
+    setDirection(newIdx > oldIdx ? 'right' : 'left');
     setActive(id);
     setContentKey((k) => k + 1);
   };
@@ -340,15 +344,15 @@ export function IndustriesSection() {
           })}
         </div>
 
-        {/* Content — keyed to trigger fadeIn on tab switch */}
+        {/* Content — keyed to trigger slide on tab switch */}
         <div
           key={contentKey}
+          className={direction === 'right' ? 'animate-slide-from-right' : 'animate-slide-from-left'}
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
             gap: 48,
             alignItems: 'start',
-            animation: 'fadeIn 0.35s ease-out',
           }}
         >
           {/* Left */}

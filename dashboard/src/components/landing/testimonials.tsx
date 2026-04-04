@@ -56,7 +56,7 @@ export function Testimonials() {
             Real results. Real businesses.
           </h2>
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.45)', maxWidth: 480, margin: '0 auto' }}>
-            Melbourne businesses using AImie every day to capture calls they used to lose.
+            Australian businesses using AImie every day to capture calls they used to lose.
           </p>
         </div>
 
@@ -148,7 +148,7 @@ export function Testimonials() {
             { num: '24/7', label: 'Always answering' },
             { num: '<480ms', label: 'Avg. response time' },
             { num: '99.9%', label: 'Uptime SLA' },
-            { num: 'Melbourne', label: 'Based & supported' },
+            { num: 'Victoria', label: 'Based & supported' },
           ].map(({ num, label }) => (
             <div key={label} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.02em', fontFamily: 'var(--font-geist-mono, monospace)' }}>{num}</div>

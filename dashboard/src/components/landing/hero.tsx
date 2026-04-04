@@ -39,8 +39,19 @@ function HardwareSpec({ icon: Icon, label, value, color }: { icon: React.Compone
   );
 }
 
+const TABS = ['voice', 'hardware'] as const;
+
 export function Hero({ onSignUp }: HeroProps) {
   const [tab, setTab] = useState<'voice' | 'hardware'>('voice');
+  const [contentKey, setContentKey] = useState(0);
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
+
+  const handleTabChange = (newTab: 'voice' | 'hardware') => {
+    if (newTab === tab) return;
+    setDirection(TABS.indexOf(newTab) > TABS.indexOf(tab) ? 'right' : 'left');
+    setTab(newTab);
+    setContentKey((k) => k + 1);
+  };
 
   return (
     <section
@@ -88,7 +99,7 @@ export function Hero({ onSignUp }: HeroProps) {
         ] as const).map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => handleTabChange(t.id)}
             style={{
               padding: '9px 22px',
               borderRadius: 9,
@@ -110,7 +121,7 @@ export function Hero({ onSignUp }: HeroProps) {
 
       {/* ══ VOICE TAB ══ */}
       {tab === 'voice' && (
-        <div style={{
+        <div key={contentKey} className={direction === 'right' ? 'animate-slide-from-left' : 'animate-slide-from-right'} style={{
           maxWidth: 1400,
           margin: '0 auto',
           padding: '0 clamp(24px, 5vw, 80px)',
@@ -121,7 +132,6 @@ export function Hero({ onSignUp }: HeroProps) {
           width: '100%',
           position: 'relative',
           zIndex: 1,
-          animation: 'fadeIn 0.35s ease',
         }}>
 
           {/* Left */}
@@ -224,7 +234,7 @@ export function Hero({ onSignUp }: HeroProps) {
 
       {/* ══ HARDWARE TAB ══ */}
       {tab === 'hardware' && (
-        <div style={{
+        <div key={contentKey} className={direction === 'right' ? 'animate-slide-from-right' : 'animate-slide-from-left'} style={{
           maxWidth: 1400,
           margin: '0 auto',
           padding: '0 clamp(24px, 5vw, 80px)',
@@ -235,7 +245,6 @@ export function Hero({ onSignUp }: HeroProps) {
           width: '100%',
           position: 'relative',
           zIndex: 1,
-          animation: 'fadeIn 0.35s ease',
         }}>
 
           {/* Left — copy */}
