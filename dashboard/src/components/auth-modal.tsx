@@ -82,7 +82,8 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
         if (result.error) {
           setError(result.error.message || 'Failed to create account.');
         } else {
-          setVerifyPending(true);
+          onClose();
+          router.push('/dashboard');
         }
       }
     } catch {

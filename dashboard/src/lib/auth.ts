@@ -18,10 +18,10 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: false,
     sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       await resend.emails.send({
-        from: 'AImie Solutions <noreply@aimiesolutions.com.au>',
+        from: 'AImie Solutions <onboarding@resend.dev>',
         to: user.email,
         subject: 'Verify your AImie account',
         html: `
@@ -47,7 +47,7 @@ export const auth = betterAuth({
     },
     sendResetPasswordEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       await resend.emails.send({
-        from: 'AImie Solutions <noreply@aimiesolutions.com.au>',
+        from: 'AImie Solutions <onboarding@resend.dev>',
         to: user.email,
         subject: 'Reset your AImie password',
         html: `
