@@ -24,6 +24,7 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
   const [mounted, setMounted]         = useState(false);
+  const [verifyPending, setVerifyPending] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -81,8 +82,7 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
         if (result.error) {
           setError(result.error.message || 'Failed to create account.');
         } else {
-          onClose();
-          router.push('/dashboard');
+          setVerifyPending(true);
         }
       }
     } catch {
@@ -160,6 +160,28 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
           <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>AImie Solutions</div>
         </div>
 
+        {/* Email verification pending */}
+        {verifyPending ? (
+          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <Zap size={24} color="#0ea5e9" />
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: 'white', marginBottom: 10 }}>Check your email</h3>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 320, margin: '0 auto 24px' }}>
+              We sent a verification link to <strong style={{ color: 'white' }}>{email}</strong>. Click the link to activate your account.
+            </p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+              Didn&apos;t get it? Check your spam folder or{' '}
+              <button
+                onClick={() => setVerifyPending(false)}
+                style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', padding: 0 }}
+              >
+                try again
+              </button>.
+            </p>
+          </div>
+        ) : (
+        <>
         {/* Tab switcher */}
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 4, marginBottom: 28 }}>
           {(['signin', 'signup'] as const).map((m) => (
@@ -221,7 +243,10 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <label style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
               {mode === 'signin' && (
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Forgot password? Contact us.</span>
+                <a href="/reset-password" style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#0ea5e9')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+                >Forgot password?</a>
               )}
             </div>
             <input className="aimie-input" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
@@ -273,6 +298,8 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
             {mode === 'signin' ? 'Create one →' : 'Sign in →'}
           </button>
         </p>
+        </>
+        )}
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>

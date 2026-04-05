@@ -1,0 +1,8 @@
+{
+  "experimentalServices": {
+    "agent": {
+      "entrypoint": "agent",
+      "routePrefix": "/"
+    }
+  }
+}

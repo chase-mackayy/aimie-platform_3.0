@@ -1,20 +1,58 @@
 'use client';
 
-import { CalendarCheck, Clock, User, Phone, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CalendarCheck, Clock, User, Phone, ChevronRight, Loader2 } from 'lucide-react';
 
-const BOOKINGS = [
-  { id: 'BK-001', customer: 'Marcus W.',   phone: '+61 412 345 678', service: 'Table for 4',        business: 'Naught Distilling',    date: 'Sat 29 Mar · 7:30pm', status: 'confirmed', statusBadge: 'badge-green' },
-  { id: 'BK-002', customer: 'Emma L.',     phone: '+61 423 111 222', service: 'Cut & Colour — Sophie', business: 'Botanica Hair Studio', date: 'Fri 28 Mar · 2:00pm',  status: 'confirmed', statusBadge: 'badge-green' },
-  { id: 'BK-003', customer: 'James W.',    phone: '+61 401 555 123', service: 'GP Appointment — Dr Chen', business: 'Bayside Medical',   date: 'Sat 29 Mar · 9:15am',  status: 'confirmed', statusBadge: 'badge-green' },
-  { id: 'BK-004', customer: 'Priya K.',    phone: '+61 411 222 333', service: 'Acrylic Full Set',    business: 'Luxe Nails & Beauty',  date: 'Sat 29 Mar · 11:00am', status: 'pending',   statusBadge: 'badge-yellow' },
-  { id: 'BK-005', customer: 'Tom R.',      phone: '+61 455 678 901', service: 'Emergency Plumbing',  business: 'Mitchell Plumbing',    date: 'Fri 28 Mar · 10:14pm', status: 'completed', statusBadge: 'badge-blue' },
-  { id: 'BK-006', customer: 'Claire B.',   phone: '+61 477 234 567', service: 'Physio Initial Consult', business: 'Core Physio Clinic', date: 'Wed 2 Apr · 4:00pm',  status: 'confirmed', statusBadge: 'badge-green' },
-];
+interface Booking {
+  id: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  service: string | null;
+  scheduledAt: string | null;
+  status: string | null;
+  createdAt: string;
+}
+
+interface Stats {
+  thisMonth: number;
+  today: number;
+  avgPerDay: number;
+}
+
+const STATUS_BADGE: Record<string, string> = {
+  confirmed: 'badge-green',
+  pending: 'badge-yellow',
+  completed: 'badge-blue',
+  cancelled: 'badge-error',
+};
+
+function formatScheduled(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleString('en-AU', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
 
 export default function BookingsPage() {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [stats, setStats] = useState<Stats>({ thisMonth: 0, today: 0, avgPerDay: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/bookings')
+      .then((r) => r.json())
+      .then((data) => {
+        setBookings(data.bookings ?? []);
+        setStats(data.stats ?? { thisMonth: 0, today: 0, avgPerDay: 0 });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div style={{ padding: 'clamp(24px, 3vw, 40px)', maxWidth: 1400 }}>
-      {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: 'white', marginBottom: 4 }}>Bookings</h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>All appointments booked by your AI receptionist</p>
@@ -23,18 +61,13 @@ export default function BookingsPage() {
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 28 }}>
         {[
-          { label: 'This Month',    value: '384',    icon: CalendarCheck, color: '#22c55e' },
-          { label: 'Today',         value: '12',     icon: Clock,         color: '#0ea5e9' },
-          { label: 'Avg per Day',   value: '13.4',   icon: CalendarCheck, color: '#38bdf8' },
+          { label: 'This Month', value: String(stats.thisMonth), icon: CalendarCheck, color: '#22c55e' },
+          { label: 'Today', value: String(stats.today), icon: Clock, color: '#0ea5e9' },
+          { label: 'Avg per Day', value: String(stats.avgPerDay), icon: CalendarCheck, color: '#38bdf8' },
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} style={{
-              background: '#0f0f0f',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 14,
-              padding: 22,
-            }}>
+            <div key={s.label} style={{ background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: 22 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${s.color}12` }}>
                   <Icon size={18} color={s.color} />
@@ -49,86 +82,68 @@ export default function BookingsPage() {
 
       {/* Table */}
       <div style={{ background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden' }}>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '20px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-        }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div>
             <h3 style={{ fontSize: 15, fontWeight: 600, color: 'white' }}>All Bookings</h3>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Completed by AImie in real time</p>
           </div>
         </div>
 
-        {/* Column headers */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '80px 1fr 1fr 1fr 1fr auto',
-          gap: 16,
-          padding: '10px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.3)',
-        }}>
-          <span>ID</span>
-          <span>Customer</span>
-          <span>Service</span>
-          <span>Date & Time</span>
-          <span>Status</span>
-          <span></span>
+        <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr 1fr auto', gap: 16, padding: '10px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>
+          <span>ID</span><span>Customer</span><span>Service</span><span>Date & Time</span><span>Status</span><span></span>
         </div>
 
-        {BOOKINGS.map((b, i) => (
-          <div
-            key={b.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '80px 1fr 1fr 1fr 1fr auto',
-              gap: 16,
-              padding: '14px 24px',
-              borderBottom: i < BOOKINGS.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-              alignItems: 'center',
-              cursor: 'default',
-              transition: 'background 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          >
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: `var(--font-geist-mono, monospace)` }}>{b.id}</span>
+        {loading ? (
+          <div style={{ padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, color: 'rgba(255,255,255,0.3)' }}>
+            <Loader2 size={28} className="animate-spin" style={{ color: '#0ea5e9' }} />
+            <p style={{ fontSize: 13 }}>Loading bookings...</p>
+          </div>
+        ) : bookings.length === 0 ? (
+          <div style={{ padding: 48, textAlign: 'center' }}>
+            <CalendarCheck size={36} style={{ margin: '0 auto 12px', opacity: 0.2, color: 'white' }} />
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'white', marginBottom: 6 }}>No bookings yet</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Bookings made by your AI receptionist will appear here.</p>
+          </div>
+        ) : (
+          bookings.map((b, i) => (
+            <div
+              key={b.id}
+              style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr 1fr auto', gap: 16, padding: '14px 24px', borderBottom: i < bookings.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', transition: 'background 0.15s ease', cursor: 'default' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: `var(--font-geist-mono, monospace)` }}>
+                {b.id.slice(0, 6).toUpperCase()}
+              </span>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <User size={13} color="#0ea5e9" />
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'white' }}>{b.customer}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                  <Phone size={10} />
-                  {b.phone}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <User size={13} color="#0ea5e9" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'white' }}>{b.customerName ?? 'Unknown'}</div>
+                  {b.customerPhone && (
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                      <Phone size={10} />{b.customerPhone}
+                    </div>
+                  )}
                 </div>
               </div>
+
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{b.service ?? '—'}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{formatScheduled(b.scheduledAt)}</div>
+
+              <span
+                className={STATUS_BADGE[b.status ?? 'pending'] ?? 'badge-yellow'}
+                style={{ fontSize: 11, padding: '3px 10px', borderRadius: 5, fontWeight: 500, width: 'fit-content', textTransform: 'capitalize' }}
+              >
+                {b.status ?? 'pending'}
+              </span>
+
+              <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
             </div>
-
-            <div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{b.service}</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{b.business}</div>
-            </div>
-
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{b.date}</div>
-
-            <span
-              className={b.statusBadge}
-              style={{ fontSize: 11, padding: '3px 10px', borderRadius: 5, fontWeight: 500, width: 'fit-content', textTransform: 'capitalize' }}
-            >
-              {b.status}
-            </span>
-
-            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

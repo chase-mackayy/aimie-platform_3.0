@@ -57,12 +57,41 @@ function _UsageBar({ used, total, color }: { used: number; total: number; color:
 export default function BillingPage() {
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [showInvoices, setShowInvoices] = useState(false);
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   const callsAnswered = 312;
   const bookingsMade = 87;
+  const nextBillingDate = '1 May 2026';
+  const monthlyAmount = 299;
 
-  const nextBillingDate = '1 April 2026';
-  const monthlyAmount = 348; // 299 base + 49 for add-ons
+  const handleSubscribe = async () => {
+    setLoadingCheckout(true);
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'professional' }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert(data.error ?? 'Stripe not configured yet — add real keys to go live.');
+    } finally {
+      setLoadingCheckout(false);
+    }
+  };
+
+  const handlePortal = async () => {
+    setLoadingPortal(true);
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert(data.error ?? 'Billing portal unavailable — Stripe not configured yet.');
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
 
   return (
     <div>
@@ -130,15 +159,25 @@ export default function BillingPage() {
               </div>
 
               <div className="flex flex-col gap-3 md:w-48">
-                <a
-                  href="#"
-                  className="electric-button flex items-center justify-center gap-2 bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] text-[#0a0a0a] font-bold py-2.5 px-4 rounded-lg text-sm"
+                <button
+                  onClick={handlePortal}
+                  disabled={loadingPortal}
+                  className="electric-button flex items-center justify-center gap-2 bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] text-[#0a0a0a] font-bold py-2.5 px-4 rounded-lg text-sm disabled:opacity-60"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  {loadingPortal
+                    ? <div className="h-4 w-4 border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] rounded-full animate-spin" />
+                    : <ExternalLink className="h-4 w-4" />}
                   Manage in Stripe
-                </a>
-                <button className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium border border-[#1e3a5f] text-[#64748b] hover:border-[#0ea5e9] hover:text-[#f0f9ff] transition-all">
-                  Update Card
+                </button>
+                <button
+                  onClick={handleSubscribe}
+                  disabled={loadingCheckout}
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium border border-[#1e3a5f] text-[#64748b] hover:border-[#0ea5e9] hover:text-[#f0f9ff] transition-all disabled:opacity-60"
+                >
+                  {loadingCheckout
+                    ? <div className="h-3 w-3 border border-[#64748b] border-t-[#0ea5e9] rounded-full animate-spin" />
+                    : null}
+                  Subscribe / Update
                 </button>
                 <button
                   onClick={() => setCancelConfirm(!cancelConfirm)}

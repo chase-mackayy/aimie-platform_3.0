@@ -210,9 +210,19 @@ export default function AddonsPage() {
     const addon = addons.find((a) => a.id === id);
     if (!addon || addon.status === 'coming_soon') return;
     setToggling(id);
-    await new Promise((r) => setTimeout(r, 700));
-    setAddons((prev) => prev.map((a) => a.id === id ? { ...a, enabled: !a.enabled } : a));
-    setToggling(null);
+    const newEnabled = !addon.enabled;
+    try {
+      await fetch(`/api/addons/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newEnabled }),
+      });
+      setAddons((prev) => prev.map((a) => a.id === id ? { ...a, enabled: newEnabled } : a));
+    } catch {
+      // revert on failure
+    } finally {
+      setToggling(null);
+    }
   };
 
   return (

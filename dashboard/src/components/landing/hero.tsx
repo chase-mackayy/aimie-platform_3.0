@@ -72,9 +72,9 @@ export function Hero({ onSignUp }: HeroProps) {
           </div>
 
           <div className="animate-fade-up" style={{ animationDelay: '0.15s' }}>
-            <h1 style={{ fontSize: 'clamp(56px, 9vw, 108px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.92, marginBottom: 28 }}>
+            <h1 style={{ fontSize: 'clamp(56px, 9vw, 108px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.92, marginBottom: 28, overflow: 'visible' }}>
               <span style={{ color: 'white', display: 'block' }}>Never Miss a</span>
-              <span className="gradient-text" style={{ display: 'block' }}>Call Again.</span>
+              <span className="gradient-text" style={{ display: 'block', paddingBottom: '0.12em' }}>Call Again.</span>
             </h1>
           </div>
 

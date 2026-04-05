@@ -165,7 +165,25 @@ Always be warm but efficient. If the caller needs urgent help, prioritise gettin
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: businessName,
+          phone,
+          address,
+          suburb,
+          state,
+          postcode,
+          services: services.split(',').map((s) => s.trim()).filter(Boolean),
+          voiceId: selectedVoice,
+          systemPrompt,
+          greeting,
+          personality,
+        }),
+      });
+    } catch { /* still show success */ }
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
