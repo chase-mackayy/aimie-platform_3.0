@@ -102,8 +102,6 @@ export default function CallsPage() {
       <Header
         title="Call History"
         subtitle="All calls handled by your AI receptionist"
-        userName=""
-        userEmail=""
       />
 
       <div className="p-6 space-y-6">

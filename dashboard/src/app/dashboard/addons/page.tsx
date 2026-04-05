@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/dashboard/header';
 import {
   Zap, CheckCircle, Clock, Users, FileText, PhoneOutgoing,
@@ -202,6 +202,23 @@ export default function AddonsPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [toggling, setToggling] = useState<string | null>(null);
 
+  // Load enabled state from DB on mount
+  useEffect(() => {
+    fetch('/api/addons')
+      .then((r) => r.json())
+      .then(({ addons: dbAddons }) => {
+        if (!Array.isArray(dbAddons)) return;
+        const enabledMap: Record<string, boolean> = {};
+        dbAddons.forEach((a: { addonId: string; enabled: boolean }) => {
+          enabledMap[a.addonId] = a.enabled;
+        });
+        setAddons((prev) =>
+          prev.map((a) => (a.id in enabledMap ? { ...a, enabled: enabledMap[a.id] } : a))
+        );
+      })
+      .catch(() => {});
+  }, []);
+
   const filtered = selectedCategory === 'All' ? addons : addons.filter((a) => a.category === selectedCategory);
   const enabledCount = addons.filter((a) => a.enabled).length;
   const addonsTotal = addons.filter((a) => a.enabled).reduce((sum, a) => sum + a.price, 0);
@@ -230,8 +247,6 @@ export default function AddonsPage() {
       <Header
         title="Marketplace"
         subtitle="Supercharge your AI receptionist with add-ons"
-        userName="Jane Smith"
-        userEmail="jane@mitchellplumbing.com.au"
       />
 
       <div className="p-6 space-y-6">

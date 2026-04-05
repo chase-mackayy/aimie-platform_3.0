@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/dashboard/header';
 import {
   Building2,
@@ -126,14 +126,14 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   // Business info state
-  const [businessName, setBusinessName] = useState('Mitchell Plumbing');
-  const [phone, setPhone] = useState('(03) 9123 4567');
-  const [address, setAddress] = useState('42 Smith Street');
-  const [suburb, setSuburb] = useState('Fitzroy');
+  const [businessName, setBusinessName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [suburb, setSuburb] = useState('');
   const [state, setState] = useState('VIC');
-  const [postcode, setPostcode] = useState('3065');
-  const [website, setWebsite] = useState('www.mitchellplumbing.com.au');
-  const [services, setServices] = useState('Blocked drains, hot water systems, general plumbing, emergency callouts, bathroom renovations, gas fitting');
+  const [postcode, setPostcode] = useState('');
+  const [website, setWebsite] = useState('');
+  const [services, setServices] = useState('');
   const [hours, setHours] = useState(BUSINESS_HOURS);
 
   // Voice state
@@ -142,8 +142,8 @@ export default function SettingsPage() {
 
   // Prompt state
   const [personality, setPersonality] = useState('professional');
-  const [greeting, setGreeting] = useState("Thank you for calling Mitchell Plumbing, I'm AImie your AI receptionist. How can I help you today?");
-  const [systemPrompt, setSystemPrompt] = useState(`You are AImie, the AI receptionist for Mitchell Plumbing in Fitzroy, Melbourne.
+  const [greeting, setGreeting] = useState("Thank you for calling, I'm AImie your AI receptionist. How can I help you today?");
+  const [systemPrompt, setSystemPrompt] = useState(`You are AImie, the AI receptionist for this business.
 
 Your role:
 - Answer calls professionally and helpfully
@@ -161,6 +161,30 @@ Always be warm but efficient. If the caller needs urgent help, prioritise gettin
 
   // Integration state
   const [integrations, setIntegrations] = useState(INTEGRATIONS);
+
+  // Load real data on mount
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then(({ business, settings }) => {
+        if (business) {
+          if (business.name) setBusinessName(business.name);
+          if (business.phone) setPhone(business.phone);
+          if (business.address) setAddress(business.address);
+          if (business.suburb) setSuburb(business.suburb);
+          if (business.state) setState(business.state);
+          if (business.postcode) setPostcode(business.postcode);
+          if (business.services?.length) setServices(business.services.join(', '));
+        }
+        if (settings) {
+          if (settings.voiceId) setSelectedVoice(settings.voiceId);
+          if (settings.personality) setPersonality(settings.personality);
+          if (settings.greeting) setGreeting(settings.greeting);
+          if (settings.systemPrompt) setSystemPrompt(settings.systemPrompt);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,8 +231,6 @@ Always be warm but efficient. If the caller needs urgent help, prioritise gettin
       <Header
         title="Agent Settings"
         subtitle="Customise your AI receptionist"
-        userName="Jane Smith"
-        userEmail="jane@mitchellplumbing.com.au"
       />
 
       <div className="p-6">
@@ -529,7 +551,7 @@ Always be warm but efficient. If the caller needs urgent help, prioritise gettin
                   <p className="text-xs text-[#64748b]">{systemPrompt.length} characters</p>
                   <button
                     type="button"
-                    onClick={() => setSystemPrompt(`You are AImie, the AI receptionist for ${businessName} in ${suburb}, Melbourne.\n\nYour role:\n- Answer calls professionally and helpfully\n- Book appointments for services\n- Provide information about services, hours, and pricing\n- Collect caller name and contact number for bookings\n\nServices offered: ${services}\n\nBusiness hours: Monday-Friday 7am-6pm, Saturday 8am-2pm.\n\nAlways be warm but efficient.`)}
+                    onClick={() => setSystemPrompt(`You are AImie, the AI receptionist for ${businessName || 'this business'}${suburb ? ` in ${suburb}` : ''}.\n\nYour role:\n- Answer calls professionally and helpfully\n- Book appointments for services\n- Provide information about services, hours, and pricing\n- Collect caller name and contact number for bookings\n${services ? `\nServices offered: ${services}\n` : ''}\nBusiness hours: Monday-Friday 7am-6pm, Saturday 8am-2pm.\n\nAlways be warm but efficient.`)}
                     className="text-xs text-[#0ea5e9] hover:text-[#38bdf8] transition-colors"
                   >
                     Reset to default

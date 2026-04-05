@@ -98,8 +98,6 @@ export default function BillingPage() {
       <Header
         title="Billing"
         subtitle="Manage your subscription and payments"
-        userName="Jane Smith"
-        userEmail="jane@mitchellplumbing.com.au"
       />
 
       <div className="p-6 space-y-6">

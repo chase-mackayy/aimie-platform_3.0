@@ -3,19 +3,22 @@
 import React from 'react';
 import { Bell, Search } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useSession } from '@/lib/auth-client';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
-  userName?: string;
-  userEmail?: string;
-  userImage?: string;
 }
 
-export function Header({ title, subtitle, userName, userEmail, userImage }: HeaderProps) {
+export function Header({ title, subtitle }: HeaderProps) {
+  const { data: session } = useSession();
+  const userName = session?.user?.name || '';
+  const userEmail = session?.user?.email || '';
+  const userImage = session?.user?.image || undefined;
+
   const initials = userName
     ? userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'A';
+    : (userEmail?.[0] ?? 'A').toUpperCase();
 
   return (
     <header className="h-16 border-b border-[#1e3a5f] bg-[#0a0a0a]/80 backdrop-blur-sm flex items-center justify-between px-6 sticky top-0 z-30">
