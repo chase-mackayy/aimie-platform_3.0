@@ -39,7 +39,7 @@ export const auth = betterAuth({
             </p>
             <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;" />
             <p style="color:rgba(255,255,255,0.2);font-size:12px;">
-              AImie Solutions Pty Ltd · ABN 24 690 118 275 · Ballarat, Victoria
+              AImie Solutions Pty Ltd · ABN 24 690 118 275 · Melbourne, Victoria
             </p>
           </div>
         `,
@@ -65,7 +65,7 @@ export const auth = betterAuth({
             </p>
             <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;" />
             <p style="color:rgba(255,255,255,0.2);font-size:12px;">
-              AImie Solutions Pty Ltd · ABN 24 690 118 275 · Ballarat, Victoria
+              AImie Solutions Pty Ltd · ABN 24 690 118 275 · Melbourne, Victoria
             </p>
           </div>
         `,

@@ -2,9 +2,42 @@
 
 import Image from 'next/image';
 import { Phone, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface HeroProps {
   onSignUp: () => void;
+}
+
+const TYPEWRITER_TEXT = 'AImie answers every call 24/7, books appointments in real time, and sounds indistinguishable from your best receptionist.';
+
+function Typewriter() {
+  const [displayed, setDisplayed] = useState('');
+  const [idx, setIdx] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setStarted(true), 1200);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+    if (idx >= TYPEWRITER_TEXT.length) return;
+    const t = setTimeout(() => {
+      setDisplayed(TYPEWRITER_TEXT.slice(0, idx + 1));
+      setIdx((i) => i + 1);
+    }, 18);
+    return () => clearTimeout(t);
+  }, [idx, started]);
+
+  return (
+    <span>
+      {displayed}
+      {idx < TYPEWRITER_TEXT.length && (
+        <span style={{ borderRight: '2px solid #0ea5e9', marginLeft: 1, animation: 'blink-cursor 0.8s step-end infinite' }} />
+      )}
+    </span>
+  );
 }
 
 function FloatingCard({ style, children }: { style: React.CSSProperties; children: React.ReactNode }) {
@@ -41,12 +74,41 @@ export function Hero({ onSignUp }: HeroProps) {
         overflow: 'hidden',
       }}
     >
-      {/* Background glows */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-        <div style={{ position: 'absolute', top: '10%', left: '5%', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.07) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-        <div style={{ position: 'absolute', top: '-5%', right: '5%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: '40%', width: 500, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.04) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-        <div className="circuit-bg" style={{ position: 'absolute', inset: 0 }} />
+      {/* Background — aurora blobs + circuit grid */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        {/* Aurora blob A */}
+        <div style={{
+          position: 'absolute', top: '5%', left: '-10%',
+          width: 900, height: 700, borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(14,165,233,0.12) 0%, rgba(56,189,248,0.06) 40%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'aurora-drift 18s ease-in-out infinite',
+        }} />
+        {/* Aurora blob B */}
+        <div style={{
+          position: 'absolute', top: '-10%', right: '-5%',
+          width: 800, height: 800, borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(167,139,250,0.1) 0%, rgba(56,189,248,0.05) 40%, transparent 70%)',
+          filter: 'blur(80px)',
+          animation: 'aurora-drift-b 22s ease-in-out infinite',
+        }} />
+        {/* Aurora blob C — bottom */}
+        <div style={{
+          position: 'absolute', bottom: '-10%', left: '30%',
+          width: 700, height: 500, borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(14,165,233,0.08) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'aurora-drift 26s ease-in-out infinite reverse',
+        }} />
+        {/* Beam sweep */}
+        <div style={{
+          position: 'absolute', top: '35%', left: 0, right: 0,
+          height: 1,
+          background: 'linear-gradient(90deg, transparent, rgba(14,165,233,0.4), rgba(167,139,250,0.3), transparent)',
+          animation: 'beam-sweep 8s ease-in-out infinite',
+          animationDelay: '3s',
+        }} />
+        <div className="circuit-bg" style={{ position: 'absolute', inset: 0, opacity: 0.6 }} />
       </div>
 
       <div style={{
@@ -79,8 +141,8 @@ export function Hero({ onSignUp }: HeroProps) {
           </div>
 
           <div className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.6)', lineHeight: 1.75, maxWidth: 520, marginBottom: 36 }}>
-              AImie answers every call 24/7, books appointments in real time, and sounds indistinguishable from your best receptionist. Your business never sleeps — even when you do.
+            <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.6)', lineHeight: 1.75, maxWidth: 520, marginBottom: 36, minHeight: 96 }}>
+              <Typewriter />
             </p>
           </div>
 
@@ -88,7 +150,7 @@ export function Hero({ onSignUp }: HeroProps) {
             <button onClick={onSignUp} className="electric-btn" style={{ background: '#0ea5e9', color: 'white', padding: '14px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
               Start Free Trial →
             </button>
-            <a href="tel:+61240727152" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '14px 24px', borderRadius: 10, fontWeight: 500, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', transition: 'all 0.2s ease' }}
+            <a href="tel:+61390226413" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '14px 24px', borderRadius: 10, fontWeight: 500, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', transition: 'all 0.2s ease' }}
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
             >
@@ -113,9 +175,9 @@ export function Hero({ onSignUp }: HeroProps) {
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', animation: 'pulse-dot 2s ease-in-out infinite' }} />
               <span style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', fontWeight: 600 }}>Live Demo</span>
             </div>
-            <a href="tel:+61240727152" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <a href="tel:+61390226413" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <Phone size={16} color="#0ea5e9" />
-              <span style={{ fontSize: 24, fontWeight: 700, color: 'white', fontFamily: `var(--font-geist-mono, monospace)` }}>+61 2 4072 7152</span>
+              <span style={{ fontSize: 24, fontWeight: 700, color: 'white', fontFamily: `var(--font-geist-mono, monospace)` }}>+61 3 9022 6413</span>
             </a>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Call now and speak to AImie — our live AI receptionist</p>
           </div>
@@ -130,6 +192,11 @@ export function Hero({ onSignUp }: HeroProps) {
             ))}
           </div>
           <div style={{ position: 'absolute', width: 280, height: 280, borderRadius: '50%', border: '1px solid rgba(14,165,233,0.2)', background: 'radial-gradient(circle, rgba(14,165,233,0.04) 0%, transparent 70%)', top: '50%', left: '50%', marginTop: -140, marginLeft: -140 }} />
+          {/* Sonar rings */}
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', border: '1px solid rgba(14,165,233,0.25)', top: '50%', left: '50%', animation: `ring-expand 3s ease-out ${i * 1}s infinite`, pointerEvents: 'none' }} />
+          ))}
+
           <div className="animate-float animate-pulse-glow" style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(14,165,233,0.4)', boxShadow: '0 0 60px rgba(14,165,233,0.25), 0 0 120px rgba(14,165,233,0.1)', top: '50%', left: '50%', marginTop: -100, marginLeft: -100 }}>
             <Image src="/mascot.jpeg" alt="AImie AI Mascot" fill unoptimized style={{ objectFit: 'cover' }} />
             <div style={{ position: 'absolute', width: 11, height: 11, borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 12px #38bdf8, 0 0 24px rgba(56,189,248,0.6)', top: '36%', left: '34%', animation: 'eye-pulse 2s ease-in-out infinite' }} />

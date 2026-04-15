@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from '@/lib/auth-client';
 import { CheckCircle, Phone, Mail, ArrowRight, Zap, Clock, Building2, ChevronRight, Loader2 } from 'lucide-react';
 
@@ -32,6 +32,7 @@ export default function DashboardPage() {
 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [form, setForm] = useState({
     businessName: '',
     industry: '',
@@ -40,21 +41,38 @@ export default function DashboardPage() {
     notes: '',
   });
 
+  // On mount — if user already has a business, skip the form
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => { if (d?.business?.name) setSubmitted(true); })
+      .catch(() => {});
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitError('');
     try {
       const res = await fetch('/api/businesses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.businessName,
+          phone: form.phone,
+          industry: form.industry,
+          callVolume: form.callVolume,
+          notes: form.notes,
+        }),
       });
       if (res.ok) {
         setSubmitted(true);
+      } else {
+        const data = await res.json();
+        setSubmitError(data.error || 'Something went wrong. Please try again.');
       }
     } catch {
-      // still show success — team follows up manually
-      setSubmitted(true);
+      setSubmitError('Network error — please check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +170,7 @@ export default function DashboardPage() {
           </div>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: 'white', marginBottom: 10 }}>You&apos;re all set!</h3>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, maxWidth: 440, margin: '0 auto 24px' }}>
-            We&apos;ve received your details. Our Ballarat-based team will be in touch within <strong style={{ color: 'white' }}>24 hours</strong> to begin training AImie on your business.
+            We&apos;ve received your details. Our Melbourne-based team will be in touch within <strong style={{ color: 'white' }}>24 hours</strong> to begin training AImie on your business.
           </p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
             <Clock size={13} />
@@ -176,6 +194,12 @@ export default function DashboardPage() {
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Takes 60 seconds — we&apos;ll handle everything else</p>
             </div>
           </div>
+
+          {submitError && (
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#ef4444', marginBottom: 4 }}>
+              {submitError}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
@@ -294,8 +318,8 @@ export default function DashboardPage() {
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, marginBottom: 16 }}>
             Call our live demo line and hear AImie in action — the same AI that will answer your calls.
           </p>
-          <a href="tel:+61240727152" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#0ea5e9', textDecoration: 'none', fontFamily: 'monospace' }}>
-            +61 2 4072 7152 <ArrowRight size={13} />
+          <a href="tel:+61390226413" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#0ea5e9', textDecoration: 'none', fontFamily: 'monospace' }}>
+            +61 3 9022 6413 <ArrowRight size={13} />
           </a>
         </div>
 
@@ -313,10 +337,10 @@ export default function DashboardPage() {
             <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white' }}>Questions?</h3>
           </div>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, marginBottom: 16 }}>
-            Our Ballarat-based team is ready to help. Reach out and we&apos;ll get back to you fast.
+            Our Melbourne-based team is ready to help. Reach out and we&apos;ll get back to you fast.
           </p>
-          <a href="mailto:hello@aimiesolutions.com.au" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#a78bfa', textDecoration: 'none' }}>
-            hello@aimiesolutions.com.au <ArrowRight size={13} />
+          <a href="mailto:aimiesolutions@aimiesolutions.com" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#a78bfa', textDecoration: 'none' }}>
+            aimiesolutions@aimiesolutions.com <ArrowRight size={13} />
           </a>
         </div>
       </div>

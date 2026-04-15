@@ -30,20 +30,15 @@ export function FinalCTA({ onSignUp }: FinalCTAProps) {
         textAlign: 'center',
       }}
     >
-      {/* Radial glow */}
-      <div style={{
-        position: 'absolute',
-        top: '50%', left: '50%',
-        transform: 'translate(-50%,-50%)',
-        width: 900, height: 450,
-        borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(14,165,233,0.07) 0%, transparent 70%)',
-        pointerEvents: 'none',
-        filter: 'blur(30px)',
-      }} />
+      {/* Aurora blobs */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-20%', left: '-10%', width: 700, height: 600, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(14,165,233,0.1) 0%, rgba(56,189,248,0.04) 40%, transparent 70%)', filter: 'blur(60px)', animation: 'aurora-drift 20s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: '-20%', right: '-5%', width: 650, height: 550, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(167,139,250,0.09) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'aurora-drift-b 17s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', top: '40%', left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(14,165,233,0.2), rgba(167,139,250,0.15), transparent)', animation: 'beam-sweep 10s ease-in-out infinite', animationDelay: '2s' }} />
+      </div>
 
       {/* Circuit grid */}
-      <div className="circuit-bg" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.5 }} />
+      <div className="circuit-bg" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.4 }} />
 
       <div
         ref={ref}
@@ -106,7 +101,7 @@ export function FinalCTA({ onSignUp }: FinalCTAProps) {
             Start Free Trial →
           </button>
           <a
-            href="tel:+61240727152"
+            href="tel:+61390226413"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -131,7 +126,7 @@ export function FinalCTA({ onSignUp }: FinalCTAProps) {
             }}
           >
             <Phone size={16} color="#0ea5e9" />
-            Call AImie Now: +61 2 4072 7152
+            Call AImie Now: +61 3 9022 6413
           </a>
         </div>
       </div>

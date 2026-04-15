@@ -16,8 +16,8 @@ export function Footer() {
     {
       heading: 'Company',
       links: [
-        { label: 'Contact Us',  href: 'mailto:hello@aimiesolutions.com.au' },
-        { label: 'Call Us',     href: 'tel:+61240727152'                   },
+        { label: 'Contact Us',  href: 'mailto:aimiesolutions@aimiesolutions.com' },
+        { label: 'Call Us',     href: 'tel:+61390226413'                   },
       ],
     },
     {
@@ -25,7 +25,7 @@ export function Footer() {
       links: [
         { label: 'Privacy Policy',    href: '/privacy' },
         { label: 'Terms of Service',  href: '/terms'   },
-        { label: 'Security',          href: 'mailto:hello@aimiesolutions.com.au' },
+        { label: 'Security',          href: 'mailto:aimiesolutions@aimiesolutions.com' },
       ],
     },
   ];
@@ -53,7 +53,7 @@ export function Footer() {
               {[
                 '🇦🇺 Australian owned & operated',
                 '🏢 ABN 24 690 118 275',
-                '📍 Ballarat, Victoria',
+                '📍 Melbourne, Victoria',
               ].map((item) => (
                 <div key={item} style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>{item}</div>
               ))}
@@ -96,7 +96,7 @@ export function Footer() {
         {/* Middle row */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-            Proudly Australian 🇦🇺 · Made in Ballarat, VIC · Powered by LiveKit, Deepgram &amp; ElevenLabs
+            Proudly Australian 🇦🇺 · Made in Melbourne, VIC · Powered by LiveKit, Deepgram &amp; ElevenLabs
           </p>
         </div>
 

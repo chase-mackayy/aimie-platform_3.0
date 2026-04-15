@@ -87,6 +87,25 @@ export function FeaturesSection() {
                   background: '#0f0f0f',
                   padding: 'clamp(28px, 3vw, 40px) clamp(24px, 3vw, 36px)',
                   transitionDelay: `${i * 0.07}s`,
+                  transformStyle: 'preserve-3d',
+                  transition: 'transform 0.15s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'default',
+                  willChange: 'transform',
+                }}
+                onMouseMove={(e) => {
+                  const el = e.currentTarget;
+                  const rect = el.getBoundingClientRect();
+                  const x = (e.clientX - rect.left) / rect.width - 0.5;
+                  const y = (e.clientY - rect.top) / rect.height - 0.5;
+                  el.style.transform = `perspective(700px) rotateX(${-y * 10}deg) rotateY(${x * 10}deg) translateZ(10px)`;
+                  el.style.borderColor = 'rgba(14,165,233,0.5)';
+                  el.style.boxShadow = `0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(14,165,233,0.1), ${x * 20}px ${y * 20}px 40px rgba(14,165,233,0.05)`;
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget;
+                  el.style.transform = 'perspective(700px) rotateX(0deg) rotateY(0deg) translateZ(0)';
+                  el.style.borderColor = '';
+                  el.style.boxShadow = '';
                 }}
               >
                 <div style={{

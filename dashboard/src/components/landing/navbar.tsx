@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
 interface NavbarProps {
@@ -31,6 +32,10 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
+
+  const pathname = usePathname();
+  const isHome = pathname === '/';
+  const anchorPrefix = isHome ? '' : '/';
 
   const navLinks = ['Features', 'Industries', 'Pricing', 'Healthcare'];
 
@@ -67,7 +72,7 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
           {navLinks.map((l) => (
             <a
               key={l}
-              href={l === 'Healthcare' ? '/healthcare' : `#${l.toLowerCase().replace(/ /g, '-')}`}
+              href={l === 'Healthcare' ? '/healthcare' : `${anchorPrefix}#${l.toLowerCase().replace(/ /g, '-')}`}
               className="nav-link"
             >
               {l}
@@ -153,7 +158,7 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
           {navLinks.map((l) => (
             <a
               key={l}
-              href={l === 'Healthcare' ? '/healthcare' : `#${l.toLowerCase().replace(/ /g, '-')}`}
+              href={l === 'Healthcare' ? '/healthcare' : `${anchorPrefix}#${l.toLowerCase().replace(/ /g, '-')}`}
               onClick={() => setMobileOpen(false)}
               style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
             >

@@ -76,8 +76,8 @@ export default function PrivacyPage() {
             <h2 style={{ fontSize: 20, fontWeight: 600, color: 'white', marginBottom: 12 }}>7. Contact Us</h2>
             <p>
               For any privacy-related questions or requests, please contact us at{' '}
-              <a href="mailto:hello@aimiesolutions.com.au" style={{ color: '#0ea5e9', textDecoration: 'none' }}>
-                hello@aimiesolutions.com.au
+              <a href="mailto:aimiesolutions@aimiesolutions.com" style={{ color: '#0ea5e9', textDecoration: 'none' }}>
+                aimiesolutions@aimiesolutions.com
               </a>
               . We will respond within 30 days.
             </p>

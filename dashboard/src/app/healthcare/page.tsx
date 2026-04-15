@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, Server, Phone, CheckCircle, Lock, Cpu, Wifi, AlertCircle, ArrowRight, Zap, FileText, Users } from 'lucide-react';
-import Link from 'next/link';
+import { Navbar } from '@/components/landing/navbar';
+import { AuthModal } from '@/components/auth-modal';
 
 const COMPLIANCE = [
   { name: 'Australian Privacy Act 1988',       desc: 'Full compliance with all 13 Australian Privacy Principles.' },
@@ -39,29 +40,48 @@ const SPECS = [
   { icon: Shield, label: 'Encryption',       value: 'AES-256 at rest, TLS 1.3 in transit' },
 ];
 
+function PageEntrance() {
+  const [phase, setPhase] = useState<'hold' | 'fading' | 'gone'>('hold');
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase('fading'), 500);
+    const t2 = setTimeout(() => setPhase('gone'), 1300);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  if (phase === 'gone') return null;
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#040d06', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, opacity: phase === 'fading' ? 0 : 1, transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1)', pointerEvents: phase === 'fading' ? 'none' : 'all' }}>
+      <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(34,197,94,0.2)', animation: 'logoGlow 1.2s ease-in-out infinite' }}>
+        <Shield size={26} color="#22c55e" />
+      </div>
+      <div style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', fontWeight: 500 }}>AImie Healthcare</div>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(34,197,94,0.5), transparent)', transformOrigin: 'left', animation: 'lineGrow 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both' }} />
+    </div>
+  );
+}
+
 export default function HealthcarePage() {
   const [activeTab, setActiveTab] = useState<'gp' | 'allied' | 'ndis'>('gp');
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const openSignUp = () => { setAuthMode('signup'); setAuthOpen(true); };
+  const openSignIn = () => { setAuthMode('signin'); setAuthOpen(true); };
 
   return (
     <div style={{ background: '#070707', minHeight: '100vh', color: 'white' }}>
-
-      {/* Nav back */}
-      <div style={{ padding: '20px clamp(24px, 5vw, 80px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.4)', textDecoration: 'none', transition: 'color 0.15s' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'white')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
-        >
-          ← Back to home
-        </Link>
-      </div>
+      <PageEntrance />
+      <Navbar onSignIn={openSignIn} onSignUp={openSignUp} />
 
       {/* Hero */}
       <section style={{
-        padding: 'clamp(60px, 8vw, 100px) clamp(24px, 5vw, 80px)',
+        padding: 'clamp(80px, 10vw, 120px) clamp(24px, 5vw, 80px) clamp(60px, 8vw, 100px)',
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 800px 400px at 60% 50%, rgba(34,197,94,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', top: '0%', left: '-15%', width: 800, height: 650, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(34,197,94,0.1) 0%, rgba(74,222,128,0.04) 40%, transparent 70%)', filter: 'blur(60px)', animation: 'aurora-drift 20s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', top: '-5%', right: '-8%', width: 650, height: 550, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(14,165,233,0.07) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'aurora-drift-b 16s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', top: '45%', left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(34,197,94,0.18), transparent)', animation: 'beam-sweep 12s ease-in-out infinite', animationDelay: '4s' }} />
+        </div>
 
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6vw, 80px)', alignItems: 'center' }}>
           <div>
@@ -83,14 +103,14 @@ export default function HealthcarePage() {
             </p>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 32 }}>
-              <a href="mailto:hello@aimiesolutions.com.au?subject=AImie Hub Healthcare Enquiry"
+              <a href="mailto:aimiesolutions@aimiesolutions.com?subject=AImie Hub Healthcare Enquiry"
                 style={{ background: '#22c55e', color: '#030712', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, transition: 'all 0.2s ease' }}
                 onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'none')}
               >
                 Request a Demo <ArrowRight size={16} />
               </a>
-              <a href="tel:+61240727152"
+              <a href="tel:+61390226413"
                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '14px 24px', borderRadius: 10, fontWeight: 500, fontSize: 15, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
               >
                 <Phone size={15} /> Call us now
@@ -186,14 +206,14 @@ export default function HealthcarePage() {
         <div style={{ maxWidth: 900, margin: '0 auto', background: 'linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(14,165,233,0.03) 100%)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 24, padding: 'clamp(28px, 4vw, 48px)' }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: '#22c55e', textTransform: 'uppercase', marginBottom: 16 }}>The ROI</div>
           <p style={{ fontSize: 'clamp(17px, 2.5vw, 22px)', color: 'rgba(255,255,255,0.85)', lineHeight: 1.75, marginBottom: 24 }}>
-            &ldquo;Your receptionist costs <strong style={{ color: 'white' }}>$65,000/year</strong>. AImie Hub costs <strong style={{ color: '#22c55e' }}>$7,188/year</strong> — that&apos;s a saving of over $57,000. It answers every call, books every appointment, handles prescription refill requests, and all patient data stays on your own device in your own clinic. You own it completely.&rdquo;
+            &ldquo;A full-time receptionist costs over <strong style={{ color: 'white' }}>$65,000/year</strong>. AImie Hub answers every call, books every appointment, handles prescription refill requests — at a fraction of that cost. All patient data stays on your own device, in your clinic, under your control. You own it completely.&rdquo;
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
             {[
-              { label: 'Monthly subscription', value: '$599/mo' },
-              { label: 'Compliance package', value: '+$199/mo' },
-              { label: 'Annual cost total', value: '~$9,576' },
               { label: 'vs. receptionist salary', value: '$65,000/yr' },
+              { label: 'Calls handled daily', value: '40+' },
+              { label: 'Staff phone time saved', value: '68%' },
+              { label: 'System uptime', value: '99.97%' },
             ].map(({ label, value }) => (
               <div key={label}>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
@@ -210,7 +230,7 @@ export default function HealthcarePage() {
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: '#22c55e', textTransform: 'uppercase', marginBottom: 16 }}>Case Study</div>
             <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'white', marginBottom: 16 }}>
-              A busy GP clinic in Ballarat
+              A busy GP clinic in Melbourne
             </h2>
           </div>
 
@@ -218,7 +238,7 @@ export default function HealthcarePage() {
             {[
               { label: 'The problem',  color: '#ef4444', content: 'A 3-doctor GP clinic was missing 40+ calls per day after hours and during peak times. Patients were booking elsewhere or going to urgent care for non-urgent issues. Staff were spending 3+ hours per day on the phone handling routine enquiries.' },
               { label: 'The solution', color: '#22c55e', content: 'AImie Hub was installed on-premise in the clinic. Within 24 hours it was answering calls, booking appointments with specific GPs, handling prescription refill requests, and triaging after-hours enquiries — all with data staying on the device.' },
-              { label: 'The result',   color: '#0ea5e9', content: '40+ calls per day recovered. Staff phone time reduced by 68%. Patient satisfaction improved because calls were answered immediately, 24/7. Total cost: $598/month. Receptionist cost saved: $5,400/month.' },
+              { label: 'The result',   color: '#0ea5e9', content: '40+ calls per day recovered. Staff phone time reduced by 68%. Patient satisfaction improved significantly — calls answered immediately, 24/7. Substantial monthly savings versus a full-time receptionist, with all patient data remaining on-premise throughout.' },
             ].map(({ label, color, content }) => (
               <div key={label} style={{ background: '#0f0f0f', border: `1px solid ${color}20`, borderRadius: 16, padding: 28, borderLeft: `3px solid ${color}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{label}</div>
@@ -377,36 +397,6 @@ export default function HealthcarePage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(24px, 5vw, 80px)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: '#22c55e', textTransform: 'uppercase', marginBottom: 16 }}>Pricing</div>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'white', marginBottom: 48 }}>Healthcare pricing</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
-            {[
-              { title: 'Subscription', price: '$599', period: '/month AUD', desc: 'Full AI receptionist service with healthcare-grade on-premise configuration.', color: '#22c55e', features: ['Unlimited inbound calls', 'Patient identity verification', 'All clinic integrations', 'Victoria-based support'] },
-              { title: 'Compliance Pack', price: '$199', period: '/month AUD', desc: 'Enhanced compliance monitoring, audit logs, and reporting.', color: '#0ea5e9', features: ['Full audit trail', 'Compliance reporting', 'Monthly privacy review', 'Incident response SLA'] },
-            ].map(({ title, price, period, desc, color, features }) => (
-              <div key={title} style={{ background: '#0f0f0f', border: `1px solid ${color}20`, borderRadius: 20, padding: 28, textAlign: 'left' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>{title}</div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'var(--font-geist-mono, monospace)', fontSize: 40, fontWeight: 800, color: 'white', lineHeight: 1 }}>{price}</span>
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>{period}</span>
-                </div>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.65, marginBottom: 20 }}>{desc}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {features.map((f) => (
-                    <div key={f} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>
-                      <CheckCircle size={13} color={color} style={{ flexShrink: 0, marginTop: 2 }} /> {f}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section style={{ padding: 'clamp(60px, 8vw, 100px) clamp(24px, 5vw, 80px)', background: '#0a0a0a', textAlign: 'center' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
@@ -415,21 +405,22 @@ export default function HealthcarePage() {
             Our team will walk you through the setup, compliance documentation, and integration with your existing clinical software.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="mailto:hello@aimiesolutions.com.au?subject=AImie Hub Healthcare Enquiry"
+            <a href="mailto:aimiesolutions@aimiesolutions.com?subject=AImie Hub Healthcare Enquiry"
               style={{ background: '#22c55e', color: '#030712', padding: '14px 32px', borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
               Book a Demo <ArrowRight size={16} />
             </a>
-            <a href="tel:+61240727152"
+            <a href="tel:+61390226413"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '14px 28px', borderRadius: 10, fontWeight: 500, fontSize: 15, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              <Phone size={15} /> +61 2 4072 7152
+              <Phone size={15} /> +61 3 9022 6413
             </a>
           </div>
         </div>
       </section>
 
-      <style>{`@keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } } @keyframes float-sm { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } } @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity: 0.5; } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
+      <style>{`@keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } } @keyframes float-sm { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } } @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity: 0.5; } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes lineGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } } @keyframes logoGlow { 0%,100% { box-shadow: 0 0 20px rgba(34,197,94,0.2); } 50% { box-shadow: 0 0 40px rgba(34,197,94,0.4); } }`}</style>
+      <AuthModal isOpen={authOpen} mode={authMode} onClose={() => setAuthOpen(false)} onModeChange={setAuthMode} />
     </div>
   );
 }

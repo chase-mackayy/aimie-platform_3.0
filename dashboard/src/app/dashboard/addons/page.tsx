@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/dashboard/header';
 import {
-  Zap, CheckCircle, Clock, Users, FileText, PhoneOutgoing,
-  Calendar, MessageSquare, Receipt, Lock, Star, ArrowRight,
-  TrendingUp, MapPin, Award, ShoppingCart, PartyPopper,
-  Palette, Package,
+  Zap, CheckCircle, Clock, Lock, ArrowRight, Receipt,
+  Package, Users, PhoneOutgoing, Star, TrendingUp,
+  Megaphone, Shield, RefreshCw, UserPlus, HeartPulse,
+  MapPin, FileText, AlertTriangle, Hotel, ThumbsUp,
+  CalendarCheck, Scissors, Heart, Gift,
 } from 'lucide-react';
 
+/* ─── Types ─── */
 interface Addon {
   id: string;
   name: string;
@@ -18,189 +20,315 @@ interface Addon {
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   accentColor: string;
   enabled: boolean;
-  status: 'available' | 'coming_soon' | 'popular';
   features: string[];
-  category: string;
+  badge?: string;
+  badgeColor?: string;
 }
 
-const ADDONS: Addon[] = [
+interface Industry {
+  id: string;
+  label: string;
+  emoji: string;
+  accentColor: string;
+  glowColor: string;
+  addons: Addon[];
+}
+
+/* ─── Industry Data ─── */
+const INDUSTRIES: Industry[] = [
   {
-    id: 'deputy',
-    name: 'Deputy Integration',
-    tagline: 'Smart roster-aware booking',
-    description: 'Sync staff rosters from Deputy so your AI only books appointments when staff are actually available.',
-    price: 49,
-    icon: Users,
-    accentColor: '#0ea5e9',
-    enabled: false,
-    status: 'popular',
-    features: ['Real-time roster sync', 'Skill-based routing', 'Auto-block unavailable slots', 'Shift change alerts'],
-    category: 'Scheduling',
-  },
-  {
-    id: 'invoice-followup',
-    name: 'Invoice Follow-up',
-    tagline: 'Chase overdue invoices automatically',
-    description: 'AImie calls customers with overdue invoices — politely, professionally, and persistently.',
-    price: 79,
-    icon: FileText,
-    accentColor: '#eab308',
-    enabled: false,
-    status: 'popular',
-    features: ['Auto-detect overdue invoices', 'Polite payment reminders', 'Payment plan negotiation', 'Xero & MYOB sync'],
-    category: 'Finance',
-  },
-  {
-    id: 'outbound-calls',
-    name: 'Outbound Calls',
-    tagline: 'Proactive customer outreach',
-    description: 'Schedule outbound call campaigns for appointment reminders, follow-ups, and customer reactivation.',
-    price: 99,
-    icon: PhoneOutgoing,
-    accentColor: '#38bdf8',
-    enabled: true,
-    status: 'available',
-    features: ['Appointment reminders', 'Customer reactivation', 'Post-job follow-ups', 'Campaign scheduling'],
-    category: 'Growth',
-  },
-  {
-    id: 'lead-scoring',
-    name: 'Lead Scoring',
-    tagline: 'Know your hottest leads instantly',
-    description: 'AI analyses every call and scores leads by intent, urgency, and value — so your team calls the right people first.',
-    price: 59,
-    icon: TrendingUp,
-    accentColor: '#22c55e',
-    enabled: false,
-    status: 'coming_soon',
-    features: ['Intent detection', 'Urgency scoring', 'Value estimation', 'CRM push integration'],
-    category: 'Analytics',
-  },
-  {
-    id: 'proximity-booking',
-    name: 'Proximity Booking',
-    tagline: 'Smart dispatch for tradies',
-    description: 'Book jobs based on technician location. AImie checks who\'s closest and books the nearest available tradie.',
-    price: 69,
-    icon: MapPin,
+    id: 'restaurants',
+    label: 'Restaurants & Bars',
+    emoji: '🍽️',
     accentColor: '#f97316',
-    enabled: false,
-    status: 'coming_soon',
-    features: ['Live GPS tracking', 'Distance-based routing', 'Travel time estimation', 'Zone management'],
-    category: 'Scheduling',
+    glowColor: 'rgba(249,115,22,0.15)',
+    addons: [
+      {
+        id: 'smart-waitlist',
+        name: 'Smart Waitlist',
+        tagline: 'Manage your waitlist by phone',
+        description: 'Callers join the waitlist via phone — AImie captures party size, name, and number automatically. Guests get an SMS when their table is ready.',
+        price: 49,
+        icon: Users,
+        accentColor: '#f97316',
+        enabled: false,
+        features: ['Auto party size capture', 'SMS table-ready alerts', 'Live waitlist dashboard', 'Estimated wait time updates'],
+      },
+      {
+        id: 'specials-broadcaster',
+        name: 'Specials Broadcaster',
+        tagline: 'Fill your slow nights automatically',
+        description: 'AImie calls your customer list to promote weekly specials, new menu items, or events. Scheduled campaigns that run on autopilot.',
+        price: 79,
+        icon: Megaphone,
+        accentColor: '#f97316',
+        enabled: false,
+        features: ['Weekly specials campaigns', 'Targeted customer lists', 'Event promotion calls', 'Booking conversion tracking'],
+        badge: 'Popular',
+        badgeColor: '#eab308',
+      },
+      {
+        id: 'meta-ads-restaurant',
+        name: 'Meta Ads — Restaurant',
+        tagline: 'Facebook & Instagram, done for you',
+        description: 'AImie runs targeted Facebook and Instagram ad campaigns for your restaurant. We handle creatives, audience targeting, and budget optimisation.',
+        price: 149,
+        icon: TrendingUp,
+        accentColor: '#f97316',
+        enabled: false,
+        features: ['Professional ad creatives', 'Local audience targeting', 'Budget management', 'Weekly performance reports'],
+        badge: '$300 ad spend included',
+        badgeColor: '#22c55e',
+      },
+    ],
   },
   {
-    id: 'google-calendar',
-    name: 'Google Calendar Sync',
-    tagline: 'Bookings appear instantly',
-    description: 'Every booking AImie makes appears instantly in Google Calendar with full customer details and notes.',
-    price: 29,
-    icon: Calendar,
-    accentColor: '#22c55e',
-    enabled: true,
-    status: 'available',
-    features: ['Instant sync', 'Two-way calendar', 'Colour-coded events', 'Team calendar sharing'],
-    category: 'Scheduling',
-  },
-  {
-    id: 'staff-reviews',
-    name: 'Staff Reviews',
-    tagline: 'Collect Google reviews automatically',
-    description: 'After a completed job, AImie calls the customer and guides them through leaving a Google review.',
-    price: 49,
-    icon: Award,
-    accentColor: '#eab308',
-    enabled: false,
-    status: 'coming_soon',
-    features: ['Post-job review calls', 'Google My Business link', 'Review sentiment tracking', 'Automated follow-up'],
-    category: 'Growth',
-  },
-  {
-    id: 'sms-followup',
-    name: 'SMS Follow-up',
-    tagline: 'Post-call texts, automatically',
-    description: 'Send automatic SMS after every call with booking confirmations, summaries, and custom CTAs.',
-    price: 39,
-    icon: MessageSquare,
-    accentColor: '#0ea5e9',
-    enabled: false,
-    status: 'available',
-    features: ['Booking confirmations', 'Call summaries via SMS', 'Custom CTA links', 'Opt-out management'],
-    category: 'Communication',
-  },
-  {
-    id: 'order-management',
-    name: 'Order Management',
-    tagline: 'Take orders over the phone',
-    description: 'Let AImie take orders, check stock availability, and send order confirmations — perfect for retail and trade suppliers.',
-    price: 89,
-    icon: ShoppingCart,
-    accentColor: '#8b5cf6',
-    enabled: false,
-    status: 'coming_soon',
-    features: ['Order taking & confirmation', 'Stock availability check', 'Order status updates', 'ERP integration'],
-    category: 'Operations',
-  },
-  {
-    id: 'function-management',
-    name: 'Function Management',
-    tagline: 'Events & function bookings',
-    description: 'Handle function and event enquiries. AImie collects requirements, checks availability, and sends quotes.',
-    price: 79,
-    icon: PartyPopper,
+    id: 'hair-beauty',
+    label: 'Hair & Beauty',
+    emoji: '💇',
     accentColor: '#ec4899',
-    enabled: false,
-    status: 'coming_soon',
-    features: ['Function enquiry handling', 'Requirements collection', 'Availability checking', 'Quote generation'],
-    category: 'Scheduling',
+    glowColor: 'rgba(236,72,153,0.15)',
+    addons: [
+      {
+        id: 'no-show-shield',
+        name: 'No-Show Shield',
+        tagline: 'Cut no-shows by up to 60%',
+        description: 'AImie calls every client 24 hours before their appointment to confirm or cancel. Freed slots are automatically offered to your waiting list.',
+        price: 49,
+        icon: Shield,
+        accentColor: '#ec4899',
+        enabled: false,
+        features: ['24hr confirmation calls', 'Auto slot reallocation', 'Cancellation tracking', 'SMS confirmation follow-up'],
+        badge: 'Popular',
+        badgeColor: '#eab308',
+      },
+      {
+        id: 'rebooking-engine',
+        name: 'Rebooking Engine',
+        tagline: 'Keep your chair full effortlessly',
+        description: 'After every appointment, AImie follows up 3–4 weeks later to rebook the client. Keeps your calendar full without any manual effort from your team.',
+        price: 69,
+        icon: RefreshCw,
+        accentColor: '#ec4899',
+        enabled: false,
+        features: ['Automated rebooking calls', 'Personalised timing per service', 'Preferred stylist routing', 'Rebook rate analytics'],
+      },
+      {
+        id: 'meta-ads-beauty',
+        name: 'Meta Ads — Beauty',
+        tagline: 'Social ads that fill your books',
+        description: 'Targeted Facebook and Instagram ads for your salon. We handle everything — creatives, audience targeting, and campaign optimisation.',
+        price: 149,
+        icon: TrendingUp,
+        accentColor: '#ec4899',
+        enabled: false,
+        features: ['Salon-specific ad creatives', 'Women 18-45 local targeting', 'Promotion & offer ads', 'Monthly reporting'],
+        badge: '$300 ad spend included',
+        badgeColor: '#22c55e',
+      },
+    ],
   },
   {
-    id: 'seasonal-promos',
-    name: 'Seasonal Promotions',
-    tagline: 'Run promo campaigns on autopilot',
-    description: 'Schedule seasonal promotion campaigns. AImie calls your customer list and promotes your current offers.',
-    price: 59,
-    icon: Star,
-    accentColor: '#f97316',
-    enabled: false,
-    status: 'coming_soon',
-    features: ['Campaign scheduling', 'Customer list targeting', 'Promotion script builder', 'Conversion tracking'],
-    category: 'Growth',
+    id: 'allied-health',
+    label: 'Allied Health',
+    emoji: '🦷',
+    accentColor: '#06b6d4',
+    glowColor: 'rgba(6,182,212,0.15)',
+    addons: [
+      {
+        id: 'new-patient-intake',
+        name: 'New Patient Intake',
+        tagline: 'Onboard patients before day one',
+        description: 'AImie handles new patient onboarding calls — collecting Medicare details, health fund info, referrals, and reason for visit before the first appointment.',
+        price: 89,
+        icon: UserPlus,
+        accentColor: '#06b6d4',
+        enabled: false,
+        features: ['Medicare & DVA collection', 'Health fund verification', 'Referral number capture', 'Pre-appointment questionnaires'],
+        badge: 'Popular',
+        badgeColor: '#eab308',
+      },
+      {
+        id: 'treatment-followup',
+        name: 'Treatment Plan Follow-up',
+        tagline: 'Improve patient adherence',
+        description: 'AImie calls patients after appointments to check progress, book follow-ups, and ensure treatment adherence — improving outcomes and retention.',
+        price: 79,
+        icon: HeartPulse,
+        accentColor: '#06b6d4',
+        enabled: false,
+        features: ['Post-appointment check-ins', 'Treatment adherence tracking', 'Follow-up booking prompts', 'Clinical notes summary (via SMS)'],
+      },
+      {
+        id: 'meta-ads-health',
+        name: 'Meta Ads — Allied Health',
+        tagline: 'Healthcare-compliant social ads',
+        description: 'Professional, compliant Facebook and Instagram campaigns for allied health practices. Targeted to your local area with healthcare-specific messaging.',
+        price: 149,
+        icon: TrendingUp,
+        accentColor: '#06b6d4',
+        enabled: false,
+        features: ['AHPRA-compliant creatives', 'Local area targeting', 'Condition-specific campaigns', 'Conversion tracking'],
+        badge: '$300 ad spend included',
+        badgeColor: '#22c55e',
+      },
+    ],
   },
   {
-    id: 'white-labelling',
-    name: 'White Labelling',
-    tagline: 'Your brand, your AI',
-    description: 'Fully white-label AImie for your business. Custom voice name, branding, and client portal for agencies.',
-    price: 199,
-    icon: Palette,
-    accentColor: '#38bdf8',
-    enabled: false,
-    status: 'coming_soon',
-    features: ['Custom AI name & persona', 'Branded client portal', 'Agency multi-client management', 'Custom reporting'],
-    category: 'Enterprise',
+    id: 'tradies',
+    label: 'Tradies',
+    emoji: '🔨',
+    accentColor: '#eab308',
+    glowColor: 'rgba(234,179,8,0.15)',
+    addons: [
+      {
+        id: 'proximity-scheduler',
+        name: 'Proximity Scheduler',
+        tagline: 'Book the nearest tradie, every time',
+        description: 'AImie books jobs based on which technician is closest using live GPS data — reducing drive time and fitting more jobs into every day.',
+        price: 99,
+        icon: MapPin,
+        accentColor: '#eab308',
+        enabled: false,
+        features: ['Live GPS technician tracking', 'Distance-based job routing', 'Travel time optimisation', 'Zone & territory management'],
+      },
+      {
+        id: 'job-quote-capture',
+        name: 'Job Quote Capture',
+        tagline: 'Never miss a quote opportunity',
+        description: 'AImie captures detailed job requirements over the phone and sends a structured quote request to your team — so you can follow up fast.',
+        price: 79,
+        icon: FileText,
+        accentColor: '#eab308',
+        enabled: false,
+        features: ['Detailed job requirement capture', 'Structured quote request emails', 'Photo upload prompt (via SMS)', 'Quote follow-up reminders'],
+        badge: 'Popular',
+        badgeColor: '#eab308',
+      },
+      {
+        id: 'emergency-surge',
+        name: 'Emergency Call Surge',
+        tagline: '24/7 urgent job escalation',
+        description: 'AImie detects emergency and urgent calls, immediately escalates to your on-call team via SMS and phone. Perfect for plumbers, electricians, and locksmiths.',
+        price: 99,
+        icon: AlertTriangle,
+        accentColor: '#ef4444',
+        enabled: false,
+        features: ['Urgency detection AI', 'On-call SMS & call alerts', 'Emergency job prioritisation', 'After-hours surcharge capture'],
+      },
+    ],
   },
   {
-    id: 'xero',
-    name: 'Xero Integration',
-    tagline: 'Sync customers & create invoices',
-    description: 'When a booking is made, AImie creates the customer in Xero and generates a draft invoice automatically.',
-    price: 49,
-    icon: Receipt,
-    accentColor: '#38bdf8',
-    enabled: false,
-    status: 'available',
-    features: ['Auto customer creation', 'Draft invoice generation', 'Payment status sync', 'GST handling'],
-    category: 'Finance',
+    id: 'hotels',
+    label: 'Hotels',
+    emoji: '🏨',
+    accentColor: '#8b5cf6',
+    glowColor: 'rgba(139,92,246,0.15)',
+    addons: [
+      {
+        id: 'upsell-concierge',
+        name: 'Upsell Concierge',
+        tagline: 'Increase RevPAR on every call',
+        description: 'When guests call to book or check in, AImie upsells room upgrades, spa packages, and dinner reservations — boosting revenue without extra staff.',
+        price: 99,
+        icon: Hotel,
+        accentColor: '#8b5cf6',
+        enabled: false,
+        features: ['Room upgrade offers', 'Spa & dining upsells', 'Early check-in / late checkout', 'Package bundling'],
+        badge: 'Popular',
+        badgeColor: '#eab308',
+      },
+      {
+        id: 'guest-experience',
+        name: 'Guest Experience Follow-up',
+        tagline: 'Win reviews before TripAdvisor does',
+        description: 'AImie calls guests after checkout to gather feedback, resolve complaints before they go public, and offer loyalty rewards to drive return stays.',
+        price: 69,
+        icon: ThumbsUp,
+        accentColor: '#8b5cf6',
+        enabled: false,
+        features: ['Post-checkout survey calls', 'Complaint resolution flow', 'Google review prompts', 'Loyalty reward delivery'],
+      },
+      {
+        id: 'function-inquiry',
+        name: 'Function & Event Inquiry',
+        tagline: 'Handle event bookings 24/7',
+        description: 'AImie handles function and event inquiries around the clock — collecting requirements, checking availability, and routing leads to your events team.',
+        price: 129,
+        icon: CalendarCheck,
+        accentColor: '#8b5cf6',
+        enabled: false,
+        features: ['24/7 event enquiry handling', 'Guest count & requirements capture', 'Availability checking', 'Events team lead routing'],
+      },
+    ],
+  },
+  {
+    id: 'nail-salons',
+    label: 'Nail Salons',
+    emoji: '💅',
+    accentColor: '#f472b6',
+    glowColor: 'rgba(244,114,182,0.15)',
+    addons: [
+      {
+        id: 'group-booking',
+        name: 'Group Booking Coordinator',
+        tagline: 'Hens, birthdays & groups made easy',
+        description: 'AImie handles group bookings for hens parties, birthdays, and events — coordinating multiple services and technicians in a single call.',
+        price: 49,
+        icon: Users,
+        accentColor: '#f472b6',
+        enabled: false,
+        features: ['Multi-service coordination', 'Technician allocation', 'Deposit capture', 'Group SMS confirmations'],
+      },
+      {
+        id: 'loyalty-reminder',
+        name: 'Loyalty Reward Reminder',
+        tagline: 'Bring back lapsed clients automatically',
+        description: 'AImie tracks client visit frequency and calls anyone who hasn\'t visited in 4–6 weeks with a personalised loyalty reward offer to bring them back.',
+        price: 49,
+        icon: Gift,
+        accentColor: '#f472b6',
+        enabled: false,
+        features: ['Visit frequency tracking', 'Personalised reward calls', '4-6 week lapse detection', 'Offer redemption tracking'],
+        badge: 'Popular',
+        badgeColor: '#eab308',
+      },
+      {
+        id: 'meta-ads-nail',
+        name: 'Meta Ads — Nail Salon',
+        tagline: 'Fill your books with local clients',
+        description: 'Facebook and Instagram ad campaigns targeted to women in your area. We handle creatives, targeting, and optimisation — you just take bookings.',
+        price: 99,
+        icon: TrendingUp,
+        accentColor: '#f472b6',
+        enabled: false,
+        features: ['Nail-specific ad creatives', 'Local women targeting', 'Seasonal promotion ads', 'Booking link integration'],
+        badge: '$300 ad spend included',
+        badgeColor: '#22c55e',
+      },
+    ],
   },
 ];
 
-const CATEGORIES = ['All', 'Scheduling', 'Finance', 'Communication', 'Growth', 'Analytics', 'Operations', 'Enterprise'];
+const COMING_SOON_INDUSTRIES = [
+  { id: 'real-estate', label: 'Real Estate', emoji: '🏠' },
+  { id: 'medical', label: 'Medical Clinics', emoji: '🩺' },
+  { id: 'gyms', label: 'Gyms & Fitness', emoji: '💪' },
+  { id: 'auto', label: 'Auto Repair', emoji: '🔧' },
+  { id: 'dental', label: 'Dental Practices', emoji: '🦷' },
+  { id: 'pet-care', label: 'Pet Care', emoji: '🐾' },
+];
 
+/* ─── Component ─── */
 export default function AddonsPage() {
-  const [addons, setAddons] = useState(ADDONS);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [activeIndustry, setActiveIndustry] = useState('restaurants');
+  const [industries, setIndustries] = useState(INDUSTRIES);
   const [toggling, setToggling] = useState<string | null>(null);
+
+  const industry = industries.find((i) => i.id === activeIndustry) ?? industries[0];
+  const allAddons = industries.flatMap((i) => i.addons);
+  const enabledCount = allAddons.filter((a) => a.enabled).length;
+  const addonsTotal = allAddons.filter((a) => a.enabled).reduce((sum, a) => sum + a.price, 0);
 
   // Load enabled state from DB on mount
   useEffect(() => {
@@ -212,31 +340,39 @@ export default function AddonsPage() {
         dbAddons.forEach((a: { addonId: string; enabled: boolean }) => {
           enabledMap[a.addonId] = a.enabled;
         });
-        setAddons((prev) =>
-          prev.map((a) => (a.id in enabledMap ? { ...a, enabled: enabledMap[a.id] } : a))
+        setIndustries((prev) =>
+          prev.map((ind) => ({
+            ...ind,
+            addons: ind.addons.map((a) =>
+              a.id in enabledMap ? { ...a, enabled: enabledMap[a.id] } : a
+            ),
+          }))
         );
       })
       .catch(() => {});
   }, []);
 
-  const filtered = selectedCategory === 'All' ? addons : addons.filter((a) => a.category === selectedCategory);
-  const enabledCount = addons.filter((a) => a.enabled).length;
-  const addonsTotal = addons.filter((a) => a.enabled).reduce((sum, a) => sum + a.price, 0);
-
-  const toggleAddon = async (id: string) => {
-    const addon = addons.find((a) => a.id === id);
-    if (!addon || addon.status === 'coming_soon') return;
-    setToggling(id);
+  const toggleAddon = async (industryId: string, addonId: string) => {
+    const ind = industries.find((i) => i.id === industryId);
+    const addon = ind?.addons.find((a) => a.id === addonId);
+    if (!addon) return;
+    setToggling(addonId);
     const newEnabled = !addon.enabled;
     try {
-      await fetch(`/api/addons/${id}`, {
+      await fetch(`/api/addons/${addonId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: newEnabled }),
       });
-      setAddons((prev) => prev.map((a) => a.id === id ? { ...a, enabled: newEnabled } : a));
+      setIndustries((prev) =>
+        prev.map((i) =>
+          i.id === industryId
+            ? { ...i, addons: i.addons.map((a) => (a.id === addonId ? { ...a, enabled: newEnabled } : a)) }
+            : i
+        )
+      );
     } catch {
-      // revert on failure
+      // revert on failure — no-op, optimistic update only
     } finally {
       setToggling(null);
     }
@@ -244,13 +380,11 @@ export default function AddonsPage() {
 
   return (
     <div>
-      <Header
-        title="Marketplace"
-        subtitle="Supercharge your AI receptionist with add-ons"
-      />
+      <Header title="Marketplace" subtitle="Industry-specific add-ons for your AI receptionist" />
 
       <div className="p-6 space-y-6">
-        {/* Summary strip */}
+
+        {/* ── Stats strip ── */}
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: 'Active Add-ons', value: String(enabledCount), icon: Package, color: '#0ea5e9' },
@@ -260,7 +394,7 @@ export default function AddonsPage() {
             const Icon = s.icon;
             return (
               <div key={s.label} className="electric-card rounded-xl p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{ background: `${s.color}12` }}>
+                <div className="p-2 rounded-lg" style={{ background: `${s.color}18` }}>
                   <Icon className="h-4 w-4" style={{ color: s.color }} />
                 </div>
                 <div>
@@ -272,79 +406,132 @@ export default function AddonsPage() {
           })}
         </div>
 
-        {/* Category pills */}
-        <div className="flex gap-2 flex-wrap">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
-                selectedCategory === cat
-                  ? 'bg-[rgba(14,165,233,0.12)] text-[#0ea5e9] border border-[rgba(14,165,233,0.25)]'
-                  : 'text-[#64748b] border border-[#1a2744] hover:border-[rgba(14,165,233,0.3)] hover:text-[#f0f9ff]'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+        {/* ── Industry tabs ── */}
+        <div className="electric-card rounded-2xl p-1.5 overflow-x-auto">
+          <div className="flex gap-1 min-w-max">
+            {INDUSTRIES.map((ind) => {
+              const isActive = activeIndustry === ind.id;
+              const enabledInIndustry = ind.addons.filter((a) => {
+                const live = industries.find((i) => i.id === ind.id)?.addons.find((a2) => a2.id === a.id);
+                return live?.enabled;
+              }).length;
+              return (
+                <button
+                  key={ind.id}
+                  onClick={() => setActiveIndustry(ind.id)}
+                  style={isActive ? {
+                    background: `${ind.accentColor}14`,
+                    border: `1px solid ${ind.accentColor}35`,
+                    color: ind.accentColor,
+                    boxShadow: `0 0 16px ${ind.accentColor}18`,
+                  } : {}}
+                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                    isActive ? '' : 'text-[#64748b] border border-transparent hover:text-[#94a3b8] hover:bg-[rgba(255,255,255,0.03)]'
+                  }`}
+                >
+                  <span className="text-base leading-none">{ind.emoji}</span>
+                  <span>{ind.label}</span>
+                  {enabledInIndustry > 0 && (
+                    <span
+                      className="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+                      style={{ background: `${ind.accentColor}22`, color: ind.accentColor }}
+                    >
+                      {enabledInIndustry}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Grid */}
+        {/* ── Industry header ── */}
+        <div
+          className="rounded-xl px-6 py-5 border"
+          style={{
+            background: `linear-gradient(135deg, ${industry.accentColor}08 0%, transparent 60%)`,
+            borderColor: `${industry.accentColor}20`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+              style={{ background: `${industry.accentColor}14`, border: `1px solid ${industry.accentColor}25` }}
+            >
+              {industry.emoji}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[#f0f9ff]">{industry.label} Add-ons</h2>
+              <p className="text-sm text-[#64748b] mt-0.5">
+                {industry.addons.length} add-ons built specifically for {industry.label.toLowerCase()} businesses
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Addon cards grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((addon) => {
-            const Icon = addon.icon;
-            const isToggling = toggling === addon.id;
-            const isComingSoon = addon.status === 'coming_soon';
+          {industry.addons.map((addon) => {
+            // Get live enabled state from state
+            const liveAddon = industries
+              .find((i) => i.id === industry.id)
+              ?.addons.find((a) => a.id === addon.id) ?? addon;
+
+            const Icon = liveAddon.icon;
+            const isToggling = toggling === liveAddon.id;
 
             return (
               <div
-                key={addon.id}
-                className={`electric-card rounded-xl flex flex-col transition-all duration-200 ${
-                  addon.enabled ? 'border-[rgba(34,197,94,0.3)] shadow-[0_0_20px_rgba(34,197,94,0.05)]' : ''
-                } ${isComingSoon ? 'opacity-55' : 'group'}`}
+                key={liveAddon.id}
+                className="electric-card rounded-xl flex flex-col group transition-all duration-200"
+                style={liveAddon.enabled ? {
+                  borderColor: 'rgba(34,197,94,0.25)',
+                  boxShadow: '0 0 24px rgba(34,197,94,0.06)',
+                } : {}}
               >
-                {/* Card header */}
                 <div className="p-5 flex-1">
+                  {/* Card top */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
-                        style={{ background: `${addon.accentColor}12`, border: `1px solid ${addon.accentColor}20` }}
-                      >
-                        <Icon className="h-5 w-5" style={{ color: addon.accentColor }} />
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-[#f0f9ff] leading-tight">{addon.name}</div>
-                        <div className="text-xs text-[#64748b] mt-0.5">{addon.tagline}</div>
-                      </div>
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
+                      style={{ background: `${liveAddon.accentColor}12`, border: `1px solid ${liveAddon.accentColor}22` }}
+                    >
+                      <Icon className="h-5 w-5" style={{ color: liveAddon.accentColor }} />
                     </div>
-                    {/* Status badge */}
-                    <div className="flex-shrink-0 ml-2">
-                      {addon.enabled && (
-                        <span className="text-xs px-2 py-0.5 rounded-full badge-active font-medium flex items-center gap-1">
+
+                    <div className="flex flex-col items-end gap-1 ml-2">
+                      {liveAddon.enabled && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.1)] text-[#22c55e] border border-[rgba(34,197,94,0.2)] font-semibold flex items-center gap-1 whitespace-nowrap">
                           <CheckCircle className="h-2.5 w-2.5" /> Active
                         </span>
                       )}
-                      {addon.status === 'popular' && !addon.enabled && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(234,179,8,0.1)] text-[#eab308] border border-[rgba(234,179,8,0.2)] font-medium">
-                          Popular
-                        </span>
-                      )}
-                      {isComingSoon && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(100,116,139,0.1)] text-[#64748b] border border-[rgba(100,116,139,0.15)] font-medium flex items-center gap-1">
-                          <Clock className="h-2.5 w-2.5" /> Soon
+                      {liveAddon.badge && !liveAddon.enabled && (
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
+                          style={{
+                            background: `${liveAddon.badgeColor}14`,
+                            color: liveAddon.badgeColor,
+                            border: `1px solid ${liveAddon.badgeColor}25`,
+                          }}
+                        >
+                          {liveAddon.badge}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#64748b] leading-relaxed mb-4">{addon.description}</p>
+                  <div className="mb-1 text-[13px] font-semibold text-[#f0f9ff] leading-tight">{liveAddon.name}</div>
+                  <div className="mb-3 text-[11px] font-medium" style={{ color: liveAddon.accentColor }}>{liveAddon.tagline}</div>
+                  <p className="text-xs text-[#64748b] leading-relaxed mb-4">{liveAddon.description}</p>
 
                   {/* Features */}
                   <ul className="space-y-1.5">
-                    {addon.features.map((f) => (
+                    {liveAddon.features.map((f) => (
                       <li key={f} className="flex items-center gap-2 text-xs text-[#475569]">
-                        <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: addon.accentColor, opacity: 0.7 }} />
+                        <div
+                          className="w-1 h-1 rounded-full flex-shrink-0"
+                          style={{ background: liveAddon.accentColor, opacity: 0.65 }}
+                        />
                         {f}
                       </li>
                     ))}
@@ -354,32 +541,30 @@ export default function AddonsPage() {
                 {/* Card footer */}
                 <div className="px-5 pb-5 pt-4 border-t border-[#1a2744] flex items-center justify-between">
                   <div>
-                    <span className="text-base font-bold text-[#f0f9ff]">+${addon.price}</span>
+                    <span className="text-base font-bold text-[#f0f9ff]">+${liveAddon.price}</span>
                     <span className="text-xs text-[#64748b]"> AUD/mo</span>
                   </div>
 
-                  {isComingSoon ? (
-                    <button disabled className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-[#111118] text-[#64748b] border border-[#1a2744] cursor-not-allowed">
-                      <Lock className="h-3 w-3" /> Coming Soon
-                    </button>
-                  ) : addon.enabled ? (
+                  {liveAddon.enabled ? (
                     <button
-                      onClick={() => toggleAddon(addon.id)}
+                      onClick={() => toggleAddon(industry.id, liveAddon.id)}
                       disabled={isToggling}
                       className="px-4 py-1.5 rounded-lg text-xs font-medium border border-[rgba(239,68,68,0.25)] text-[#ef4444] hover:bg-[rgba(239,68,68,0.06)] transition-colors"
                     >
-                      {isToggling ? <div className="h-3 w-3 border border-[#ef4444]/30 border-t-[#ef4444] rounded-full animate-spin" /> : 'Disable'}
+                      {isToggling
+                        ? <div className="h-3 w-3 border border-[#ef4444]/30 border-t-[#ef4444] rounded-full animate-spin" />
+                        : 'Disable'}
                     </button>
                   ) : (
                     <button
-                      onClick={() => toggleAddon(addon.id)}
+                      onClick={() => toggleAddon(industry.id, liveAddon.id)}
                       disabled={isToggling}
-                      className="electric-button flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#0ea5e9] hover:bg-[#38bdf8] text-[#0a0a0a] transition-colors"
+                      className="electric-button flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                      style={{ background: liveAddon.accentColor, color: '#fff' }}
                     >
                       {isToggling
-                        ? <div className="h-3 w-3 border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] rounded-full animate-spin" />
-                        : <><Zap className="h-3 w-3" /> Enable</>
-                      }
+                        ? <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        : <><Zap className="h-3 w-3" /> Enable</>}
                     </button>
                   )}
                 </div>
@@ -388,19 +573,47 @@ export default function AddonsPage() {
           })}
         </div>
 
-        {/* Custom integration CTA */}
+        {/* ── Coming Soon Industries ── */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="text-sm font-semibold text-[#64748b] uppercase tracking-widest">Coming Soon</div>
+            <div className="flex-1 h-px bg-[#1a2744]" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            {COMING_SOON_INDUSTRIES.map((ind) => (
+              <div
+                key={ind.id}
+                className="electric-card rounded-xl p-4 flex flex-col items-center gap-2 opacity-50 cursor-not-allowed select-none"
+              >
+                <span className="text-2xl">{ind.emoji}</span>
+                <span className="text-xs text-[#64748b] text-center font-medium leading-tight">{ind.label}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(100,116,139,0.1)] text-[#64748b] border border-[rgba(100,116,139,0.15)] flex items-center gap-1">
+                  <Clock className="h-2 w-2" /> Soon
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Custom integration CTA ── */}
         <div className="electric-card rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold text-[#f0f9ff] mb-1">Need a custom integration?</h3>
-            <p className="text-xs text-[#64748b]">We can build a bespoke integration for your specific business software. Talk to our team.</p>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[rgba(14,165,233,0.1)] border border-[rgba(14,165,233,0.2)] flex items-center justify-center flex-shrink-0">
+              <Star className="h-5 w-5 text-[#0ea5e9]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-[#f0f9ff] mb-0.5">Need something custom?</h3>
+              <p className="text-xs text-[#64748b]">We build bespoke integrations for any industry or software stack. Talk to our team.</p>
+            </div>
           </div>
           <a
-            href="mailto:hello@aimiesolutions.com"
+            href="mailto:aimiesolutions@aimiesolutions.com"
             className="electric-button flex items-center gap-2 bg-[#0ea5e9] hover:bg-[#38bdf8] text-[#0a0a0a] font-semibold px-5 py-2.5 rounded-lg text-xs transition-colors whitespace-nowrap"
           >
             Contact Us <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>
+
       </div>
     </div>
   );

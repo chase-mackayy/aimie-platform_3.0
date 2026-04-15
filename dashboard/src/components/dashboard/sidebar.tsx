@@ -232,7 +232,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger */}
+      {/* Mobile hamburger — hidden when drawer is open */}
       <button
         onClick={() => setMobileOpen(true)}
         className="lg:hidden"
@@ -242,7 +242,8 @@ export function Sidebar() {
           background: '#0f0f0f',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 8,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          display: mobileOpen ? 'none' : 'flex',
+          alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'white',
         }}
       >

@@ -4,6 +4,72 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { AuthModal } from '@/components/auth-modal';
 import { Navbar } from '@/components/landing/navbar';
+
+/* ─── Scroll progress bar ─── */
+function ScrollProgress() {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      setPct(total > 0 ? (window.scrollY / total) * 100 : 0);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 2, zIndex: 9999, background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }}>
+      <div style={{
+        height: '100%',
+        width: `${pct}%`,
+        background: 'linear-gradient(90deg, #0ea5e9, #38bdf8, #a78bfa)',
+        boxShadow: '0 0 12px rgba(14,165,233,0.8), 0 0 24px rgba(14,165,233,0.3)',
+        transition: 'width 0.08s linear',
+        borderRadius: '0 2px 2px 0',
+      }} />
+    </div>
+  );
+}
+
+/* ─── Floating particles ─── */
+const PARTICLES = [
+  { left: '8%',  size: 2, delay: 0,   dur: 12, hue: 0 },
+  { left: '15%', size: 1, delay: 2,   dur: 14, hue: 1 },
+  { left: '23%', size: 3, delay: 4,   dur: 10, hue: 2 },
+  { left: '31%', size: 1, delay: 1,   dur: 16, hue: 0 },
+  { left: '38%', size: 2, delay: 6,   dur: 11, hue: 1 },
+  { left: '46%', size: 1, delay: 3,   dur: 13, hue: 2 },
+  { left: '53%', size: 3, delay: 7,   dur: 15, hue: 0 },
+  { left: '60%', size: 2, delay: 0.5, dur: 9,  hue: 1 },
+  { left: '67%', size: 1, delay: 5,   dur: 17, hue: 2 },
+  { left: '74%', size: 2, delay: 2.5, dur: 12, hue: 0 },
+  { left: '81%', size: 1, delay: 8,   dur: 14, hue: 1 },
+  { left: '88%', size: 3, delay: 3.5, dur: 10, hue: 2 },
+  { left: '93%', size: 1, delay: 1.5, dur: 18, hue: 0 },
+  { left: '4%',  size: 2, delay: 9,   dur: 13, hue: 1 },
+  { left: '50%', size: 1, delay: 4.5, dur: 11, hue: 2 },
+];
+const PARTICLE_COLORS = ['#38bdf8', '#0ea5e9', '#a78bfa'];
+
+function FloatingParticles() {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+      {PARTICLES.map((p, i) => (
+        <div key={i} style={{
+          position: 'absolute',
+          bottom: '-4px',
+          left: p.left,
+          width: p.size,
+          height: p.size,
+          borderRadius: '50%',
+          background: PARTICLE_COLORS[p.hue],
+          opacity: 0,
+          animation: `particle-rise ${p.dur}s ${p.delay}s ease-in infinite`,
+          boxShadow: `0 0 ${p.size * 4}px ${PARTICLE_COLORS[p.hue]}`,
+        }} />
+      ))}
+    </div>
+  );
+}
 import { Hero } from '@/components/landing/hero';
 import { Ticker } from '@/components/landing/ticker';
 import { StatsBar } from '@/components/landing/stats-bar';
@@ -134,6 +200,8 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh', position: 'relative' }}>
+      <ScrollProgress />
+      <FloatingParticles />
       <PageEntrance />
       <CursorGlow />
       <Navbar onSignIn={openSignIn} onSignUp={openSignUp} />
