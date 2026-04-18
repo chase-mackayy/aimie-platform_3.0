@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { calls } from '@/lib/db/schema';
+import { calls, businesses, users } from '@/lib/db/schema';
 import { getSession, getBusiness } from '@/lib/session';
-import { eq, desc, and, ilike, or } from 'drizzle-orm';
+import { eq, desc, and, ilike, or, count } from 'drizzle-orm';
+import { sendFirstCallEmail } from '@/lib/emails';
 
 export async function GET(req: NextRequest) {
   try {
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Called by Twilio/LiveKit agent after each call
+// Called by the AI voice agent after each call completes
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
@@ -65,6 +66,40 @@ export async function POST(req: NextRequest) {
         recordingUrl: recordingUrl ?? null,
       })
       .returning();
+
+    // Check if this is the first call and we haven't sent the email yet
+    if (!business.firstCallEmailSent) {
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(calls)
+        .where(eq(calls.businessId, business.id));
+
+      if (total === 1) {
+        // Look up the user's email
+        const [user] = await db
+          .select({ email: users.email })
+          .from(users)
+          .where(eq(users.id, session.user.id))
+          .limit(1);
+
+        if (user?.email) {
+          // Send first-call email (don't block response)
+          sendFirstCallEmail(user.email, {
+            businessName: business.name,
+            callerNumber: callerNumber ?? 'Unknown',
+            duration: typeof duration === 'number' ? duration : null,
+            transcript: transcript ?? null,
+            summary: summary ?? null,
+          }).catch((err) => console.error('First-call email failed:', err));
+
+          // Mark as sent
+          await db
+            .update(businesses)
+            .set({ firstCallEmailSent: true })
+            .where(eq(businesses.id, business.id));
+        }
+      }
+    }
 
     return NextResponse.json({ call: created }, { status: 201 });
   } catch {

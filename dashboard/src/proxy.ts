@@ -16,8 +16,8 @@ export function proxy(request: NextRequest) {
     request.cookies.get('better-auth.session_token') ||
     request.cookies.get('__Secure-better-auth.session_token');
 
-  // Protect dashboard routes
-  if (pathname.startsWith('/dashboard') && !session) {
+  // Protect dashboard + admin routes — redirect to login if no session
+  if ((pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) && !session) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     url.searchParams.set('auth', 'signin');
@@ -39,5 +39,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/((?!auth|billing/webhook).)*'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/api/((?!auth|billing/webhook).)*'],
 };

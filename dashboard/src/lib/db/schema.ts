@@ -6,6 +6,7 @@ export const users = pgTable('users', {
   name: text('name'),
   emailVerified: boolean('email_verified').default(false),
   image: text('image'),
+  role: text('role').default('user'),           // 'user' | 'admin'
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -14,6 +15,7 @@ export const businesses = pgTable('businesses', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id').references(() => users.id),
   name: text('name').notNull(),
+  industry: text('industry'),
   description: text('description'),
   phone: text('phone'),
   address: text('address'),
@@ -25,7 +27,9 @@ export const businesses = pgTable('businesses', {
   services: text('services').array(),
   bookingUrl: text('booking_url'),
   bookingPlatform: text('booking_platform'),
+  bookingApiKey: text('booking_api_key'),
   specialNotes: text('special_notes'),
+  amyName: text('amy_name'),
   twilioNumber: text('twilio_number'),
   telnyxNumber: text('telnyx_number'),
   livekitTrunkId: text('livekit_trunk_id'),
@@ -33,6 +37,13 @@ export const businesses = pgTable('businesses', {
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   subscriptionStatus: text('subscription_status').default('trial'),
+  plan: text('plan').default('professional'),    // 'starter' | 'professional' | 'growth'
+  callMinutesUsed: integer('call_minutes_used').default(0),
+  callMinutesLimit: integer('call_minutes_limit').default(600),
+  referralCode: text('referral_code').unique(),
+  referredBy: text('referred_by'),               // referral_code of referrer
+  onboardingStep: integer('onboarding_step').default(0),
+  firstCallEmailSent: boolean('first_call_email_sent').default(false),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -106,6 +117,17 @@ export const accounts = pgTable('accounts', {
   password: text('password'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
+});
+
+export const webhooks = pgTable('webhooks', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  businessId: text('business_id').references(() => businesses.id),
+  url: text('url').notNull(),
+  secret: text('secret').notNull(),
+  events: text('events').array().default(['call.completed', 'booking.created']),
+  enabled: boolean('enabled').default(true),
+  lastDeliveredAt: timestamp('last_delivered_at'),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const verifications = pgTable('verifications', {

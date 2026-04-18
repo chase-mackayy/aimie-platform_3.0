@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 import { CheckCircle, Phone, Mail, ArrowRight, Zap, Clock, Building2, ChevronRight, Loader2 } from 'lucide-react';
 
 const STEPS = [
@@ -24,6 +25,7 @@ const INDUSTRIES = [
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const user = session?.user;
   const firstName = user?.name?.split(' ')[0] || 'there';
 
@@ -41,13 +43,19 @@ export default function DashboardPage() {
     notes: '',
   });
 
-  // On mount — if user already has a business, skip the form
+  // On mount — redirect to onboarding if not complete
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('/api/onboarding')
       .then((r) => r.json())
-      .then((d) => { if (d?.business?.name) setSubmitted(true); })
+      .then((d) => {
+        if ((d.onboardingStep ?? 0) < 4) {
+          router.push('/dashboard/onboarding');
+        } else {
+          setSubmitted(true); // onboarding done, show dashboard
+        }
+      })
       .catch(() => {});
-  }, []);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -83,7 +83,23 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
           setError(result.error.message || 'Failed to create account.');
         } else {
           onClose();
-          router.push('/dashboard');
+          // New signup → initiate Stripe checkout
+          try {
+            const res = await fetch('/api/billing/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ plan: 'professional' }),
+            });
+            if (res.ok) {
+              const { url } = await res.json();
+              if (url) {
+                window.location.href = url;
+                return;
+              }
+            }
+          } catch { /* fall through */ }
+          // Fallback if Stripe not configured
+          router.push('/dashboard/onboarding');
         }
       }
     } catch {
