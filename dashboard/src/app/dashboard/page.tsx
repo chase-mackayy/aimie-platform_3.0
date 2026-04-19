@@ -3,361 +3,369 @@
 import { useState, useEffect } from 'react';
 import { useSession } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
-import { CheckCircle, Phone, Mail, ArrowRight, Zap, Clock, Building2, ChevronRight, Loader2 } from 'lucide-react';
+import {
+  Phone, PhoneIncoming, CheckCircle, Clock, BarChart3,
+  ArrowRight, TrendingUp, Calendar, Zap, PhoneMissed,
+} from 'lucide-react';
 
-const STEPS = [
-  { label: 'Account created',                    done: true,  active: false },
-  { label: 'Business setup & AI training',        done: false, active: true  },
-  { label: 'Phone number connected',              done: false, active: false },
-  { label: 'Go live — AImie answers your calls', done: false, active: false },
-];
+interface CallRow {
+  id: string;
+  callerNumber: string | null;
+  duration: number | null;
+  outcome: string | null;
+  createdAt: string;
+  summary: string | null;
+}
 
-const INDUSTRIES = [
-  'Restaurant / Cafe / Bar',
-  'Hair Salon / Barbershop',
-  'Nail Salon / Beauty Studio',
-  'Medical / GP Clinic',
-  'Physio / Allied Health',
-  'Trades (Plumbing, Electrical, etc.)',
-  'Hotel / Accommodation',
-  'Other',
-];
+interface DashboardData {
+  totalCalls: number;
+  callsToday: number;
+  callsThisWeek: number;
+  avgDuration: number;
+  recentCalls: CallRow[];
+  businessName: string;
+  telnyxNumber: string | null;
+}
+
+function formatDuration(s: number) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+}
+
+function formatTime(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function OutcomeBadge({ outcome }: { outcome: string | null }) {
+  const map: Record<string, { label: string; color: string; bg: string }> = {
+    booked:    { label: 'Booked',    color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+    info:      { label: 'Info',      color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)' },
+    missed:    { label: 'Missed',    color: '#ef4444', bg: 'rgba(239,68,68,0.08)' },
+    callback:  { label: 'Callback',  color: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+    'after-hours': { label: 'After hours', color: '#6366f1', bg: 'rgba(99,102,241,0.08)' },
+  };
+  const style = map[outcome ?? ''] ?? { label: outcome ?? 'Call', color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)' };
+  return (
+    <span style={{
+      fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+      color: style.color, background: style.bg, border: `1px solid ${style.color}25`,
+    }}>
+      {style.label}
+    </span>
+  );
+}
 
 export default function DashboardPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const user = session?.user;
-  const firstName = user?.name?.split(' ')[0] || 'there';
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(null);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const firstName = session?.user?.name?.split(' ')[0] || '';
 
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [form, setForm] = useState({
-    businessName: '',
-    industry: '',
-    phone: '',
-    callVolume: '',
-    notes: '',
-  });
-
-  // On mount — redirect to onboarding if not complete
   useEffect(() => {
-    fetch('/api/onboarding')
-      .then((r) => r.json())
-      .then((d) => {
-        if ((d.onboardingStep ?? 0) < 4) {
-          router.push('/dashboard/onboarding');
-        } else {
-          setSubmitted(true); // onboarding done, show dashboard
+    async function load() {
+      try {
+        // Check onboarding first
+        const ob = await fetch('/api/onboarding').then((r) => r.json());
+        if ((ob.onboardingStep ?? 0) < 4) {
+          router.replace('/dashboard/onboarding');
+          return;
         }
-      })
-      .catch(() => {});
+
+        // Load calls for dashboard stats
+        const callsRes = await fetch('/api/calls').then((r) => r.json());
+        const allCalls: CallRow[] = callsRes.calls ?? [];
+
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const callsToday = allCalls.filter((c) => new Date(c.createdAt) >= todayStart).length;
+        const callsThisWeek = allCalls.filter((c) => new Date(c.createdAt) >= weekStart).length;
+        const durations = allCalls.filter((c) => c.duration).map((c) => c.duration!);
+        const avgDuration = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0;
+
+        setData({
+          totalCalls: allCalls.length,
+          callsToday,
+          callsThisWeek,
+          avgDuration,
+          recentCalls: allCalls.slice(0, 8),
+          businessName: ob.business?.name ?? 'Your business',
+          telnyxNumber: ob.business?.telnyxNumber ?? null,
+        });
+      } catch {
+        // If anything fails, still show dashboard
+        setData({
+          totalCalls: 0, callsToday: 0, callsThisWeek: 0, avgDuration: 0,
+          recentCalls: [], businessName: 'Your business', telnyxNumber: null,
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setSubmitError('');
-    try {
-      const res = await fetch('/api/businesses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.businessName,
-          phone: form.phone,
-          industry: form.industry,
-          callVolume: form.callVolume,
-          notes: form.notes,
-        }),
-      });
-      if (res.ok) {
-        setSubmitted(true);
-      } else {
-        const data = await res.json();
-        setSubmitError(data.error || 'Something went wrong. Please try again.');
-      }
-    } catch {
-      setSubmitError('Network error — please check your connection and try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // Full-screen loader while checking — no flash of wrong content
+  if (loading) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, background: '#0a0a0a',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 100,
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%',
+            border: '2px solid rgba(14,165,233,0.15)',
+            borderTop: '2px solid #0ea5e9',
+            animation: 'spin 0.7s linear infinite',
+            margin: '0 auto 16px',
+          }} />
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.35)',
-    marginBottom: 8,
-  };
+  const stats = [
+    { label: 'Total calls', value: data?.totalCalls ?? 0, icon: Phone, color: '#0ea5e9', change: null },
+    { label: 'Today', value: data?.callsToday ?? 0, icon: PhoneIncoming, color: '#22c55e', change: null },
+    { label: 'This week', value: data?.callsThisWeek ?? 0, icon: TrendingUp, color: '#a78bfa', change: null },
+    { label: 'Avg. duration', value: data?.avgDuration ? formatDuration(data.avgDuration) : '—', icon: Clock, color: '#f59e0b', change: null },
+  ];
 
   return (
-    <div style={{ padding: 'clamp(24px, 4vw, 48px)', maxWidth: 920 }}>
+    <div style={{ padding: 'clamp(24px, 4vw, 40px)', maxWidth: 1000 }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 36 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'white', marginBottom: 4 }}>
-          {greeting}, {firstName} 👋
-        </h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>
-          Welcome to AImie Solutions — let&apos;s get your AI receptionist set up.
-        </p>
-      </div>
-
-      {/* Progress steps */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(14,165,233,0.06) 0%, rgba(56,189,248,0.02) 100%)',
-        border: '1px solid rgba(14,165,233,0.15)',
-        borderRadius: 20,
-        padding: 'clamp(20px, 3vw, 32px)',
-        marginBottom: 24,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={20} color="#0ea5e9" />
-          </div>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, color: 'white', marginBottom: 1 }}>Setup progress</h2>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Step 2 of 4 — complete the form below to continue</p>
+            <h1 style={{ fontSize: 26, fontWeight: 700, color: 'white', letterSpacing: '-0.02em', marginBottom: 4 }}>
+              {greeting}{firstName ? `, ${firstName}` : ''}
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)' }}>
+              {data?.businessName} — Amy is live and ready to answer
+            </p>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {STEPS.map((step, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: step.done ? 'rgba(34,197,94,0.12)' : step.active ? 'rgba(14,165,233,0.12)' : 'rgba(255,255,255,0.04)',
-                border: `1px solid ${step.done ? 'rgba(34,197,94,0.35)' : step.active ? 'rgba(14,165,233,0.35)' : 'rgba(255,255,255,0.08)'}`,
-              }}>
-                {step.done
-                  ? <CheckCircle size={12} color="#22c55e" />
-                  : step.active
-                    ? <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#0ea5e9', boxShadow: '0 0 8px #0ea5e9' }} />
-                    : <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />}
-              </div>
-              <span style={{ fontSize: 13, fontWeight: step.active ? 600 : 400, color: step.done ? '#22c55e' : step.active ? 'white' : 'rgba(255,255,255,0.25)' }}>
-                {step.label}
-              </span>
-              {step.active && (
-                <span style={{ fontSize: 10, fontWeight: 600, color: '#0ea5e9', background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 4, padding: '2px 7px' }}>
-                  Next
-                </span>
-              )}
-              {step.done && (
-                <span style={{ fontSize: 10, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.18)', borderRadius: 4, padding: '2px 7px' }}>
-                  Done
-                </span>
-              )}
-            </div>
-          ))}
+          {data?.telnyxNumber && (
+            <a
+              href={`tel:${data.telnyxNumber}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '9px 16px', borderRadius: 10,
+                border: '1px solid rgba(14,165,233,0.25)',
+                background: 'rgba(14,165,233,0.05)',
+                color: '#0ea5e9', fontSize: 13, fontWeight: 600,
+                textDecoration: 'none', letterSpacing: '0.01em',
+              }}
+            >
+              <Phone size={13} />
+              {data.telnyxNumber}
+            </a>
+          )}
         </div>
       </div>
 
-      {/* Intake form or success */}
-      {submitted ? (
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 28 }}>
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} style={{
+              background: '#0f0f0f',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 14,
+              padding: '18px 20px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>{stat.label}</span>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: `${stat.color}12`,
+                  border: `1px solid ${stat.color}25`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={13} color={stat.color} />
+                </div>
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: 'white', letterSpacing: '-0.02em' }}>
+                {stat.value}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Amy status + recent calls */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,2fr)', gap: 16, marginBottom: 16 }} className="lg:grid md:grid-cols-1">
+
+        {/* Amy status card */}
         <div style={{
           background: '#0f0f0f',
           border: '1px solid rgba(34,197,94,0.2)',
-          borderRadius: 20,
-          padding: 'clamp(28px, 4vw, 48px)',
-          textAlign: 'center',
-          marginBottom: 24,
+          borderRadius: 14,
+          padding: 24,
         }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <CheckCircle size={28} color="#22c55e" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#22c55e' }}>Amy is live</span>
           </div>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: 'white', marginBottom: 10 }}>You&apos;re all set!</h3>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, maxWidth: 440, margin: '0 auto 24px' }}>
-            We&apos;ve received your details. Our Melbourne-based team will be in touch within <strong style={{ color: 'white' }}>24 hours</strong> to begin training AImie on your business.
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, marginBottom: 20 }}>
+            Your AI receptionist is answering calls 24/7 and handling bookings automatically.
           </p>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
-            <Clock size={13} />
-            Most businesses are fully live within 48 hours of this step.
-          </div>
-        </div>
-      ) : (
-        <div style={{
-          background: '#0f0f0f',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: 20,
-          padding: 'clamp(24px, 4vw, 40px)',
-          marginBottom: 24,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Building2 size={18} color="#0ea5e9" />
-            </div>
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'white', marginBottom: 1 }}>Tell us about your business</h3>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Takes 60 seconds — we&apos;ll handle everything else</p>
-            </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { icon: Phone, label: 'Answers every call', color: '#0ea5e9' },
+              { icon: Calendar, label: 'Takes bookings', color: '#a78bfa' },
+              { icon: CheckCircle, label: 'Sends confirmations', color: '#22c55e' },
+              { icon: Clock, label: 'Works after hours', color: '#f59e0b' },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Icon size={12} color={item.color} />
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{item.label}</span>
+                </div>
+              );
+            })}
           </div>
 
-          {submitError && (
-            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#ef4444', marginBottom: 4 }}>
-              {submitError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Business Name</label>
-                <input
-                  className="aimie-input"
-                  placeholder="e.g. Mitchell Plumbing"
-                  value={form.businessName}
-                  onChange={set('businessName')}
-                  required
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Business Phone</label>
-                <input
-                  className="aimie-input"
-                  type="tel"
-                  placeholder="e.g. 03 9123 4567"
-                  value={form.phone}
-                  onChange={set('phone')}
-                  required
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Industry</label>
-                <select
-                  className="aimie-input"
-                  value={form.industry}
-                  onChange={set('industry')}
-                  required
-                  style={{ appearance: 'none', cursor: 'pointer' }}
-                >
-                  <option value="">Select your industry</option>
-                  {INDUSTRIES.map((ind) => (
-                    <option key={ind} value={ind}>{ind}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Approx. calls per week</label>
-                <select
-                  className="aimie-input"
-                  value={form.callVolume}
-                  onChange={set('callVolume')}
-                  required
-                  style={{ appearance: 'none', cursor: 'pointer' }}
-                >
-                  <option value="">Select volume</option>
-                  <option>Under 20</option>
-                  <option>20–50</option>
-                  <option>50–100</option>
-                  <option>100–200</option>
-                  <option>200+</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label style={labelStyle}>Anything else we should know? <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
-              <textarea
-                className="aimie-input"
-                rows={3}
-                placeholder="e.g. We use Fresha for bookings, open 7 days, peak hours are Friday evenings..."
-                value={form.notes}
-                onChange={set('notes')}
-                style={{ resize: 'vertical', lineHeight: 1.6 }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="electric-btn"
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <a
+              href="/dashboard/settings"
               style={{
-                alignSelf: 'flex-start',
-                background: submitting ? 'rgba(14,165,233,0.6)' : '#0ea5e9',
-                color: 'white',
-                padding: '13px 28px',
-                borderRadius: 10,
-                fontWeight: 600,
-                fontSize: 15,
-                border: 'none',
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 12, color: '#0ea5e9', textDecoration: 'none', fontWeight: 600,
               }}
             >
-              {submitting
-                ? <><Loader2 size={16} style={{ animation: 'spin 0.7s linear infinite' }} /> Submitting...</>
-                : <>Submit to AImie Team <ChevronRight size={16} /></>}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Bottom cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 20 }}>
-        <div style={{
-          background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24,
-          transition: 'border-color 0.2s ease',
-        }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(14,165,233,0.2)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)')}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Phone size={15} color="#0ea5e9" />
-            </div>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white' }}>Try AImie now</h3>
+              <Zap size={12} />
+              Configure Amy <ArrowRight size={11} />
+            </a>
           </div>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, marginBottom: 16 }}>
-            Call our live demo line and hear AImie in action — the same AI that will answer your calls.
-          </p>
-          <a href="tel:+61390226413" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#0ea5e9', textDecoration: 'none', fontFamily: 'monospace' }}>
-            +61 3 9022 6413 <ArrowRight size={13} />
-          </a>
         </div>
 
+        {/* Recent calls */}
         <div style={{
-          background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24,
-          transition: 'border-color 0.2s ease',
-        }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(167,139,250,0.2)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)')}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Mail size={15} color="#a78bfa" />
+          background: '#0f0f0f',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: 14,
+          overflow: 'hidden',
+        }}>
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <BarChart3 size={14} color="rgba(255,255,255,0.3)" />
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'white' }}>Recent calls</span>
             </div>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white' }}>Questions?</h3>
+            <a href="/dashboard/calls" style={{ fontSize: 12, color: '#0ea5e9', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              View all <ArrowRight size={11} />
+            </a>
           </div>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, marginBottom: 16 }}>
-            Our Melbourne-based team is ready to help. Reach out and we&apos;ll get back to you fast.
-          </p>
-          <a href="mailto:aimiesolutions@aimiesolutions.com" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#a78bfa', textDecoration: 'none' }}>
-            aimiesolutions@aimiesolutions.com <ArrowRight size={13} />
-          </a>
+
+          {data?.recentCalls.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+              <PhoneMissed size={28} color="rgba(255,255,255,0.1)" style={{ margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>No calls yet</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.12)', marginTop: 4 }}>
+                Forward your number to Amy to get started
+              </p>
+            </div>
+          ) : (
+            <div>
+              {data?.recentCalls.map((call, i) => (
+                <div
+                  key={call.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 20px',
+                    borderBottom: i < (data.recentCalls.length - 1) ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: 'rgba(255,255,255,0.04)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Phone size={13} color="rgba(255,255,255,0.3)" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
+                      {call.callerNumber || 'Unknown'}
+                    </div>
+                    {call.summary && (
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {call.summary}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <OutcomeBadge outcome={call.outcome} />
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>
+                      {call.duration ? formatDuration(call.duration) : '—'}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.15)', minWidth: 60, textAlign: 'right' }}>
+                      {formatTime(call.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10 }}>
-        <Clock size={13} color="rgba(255,255,255,0.25)" style={{ flexShrink: 0 }} />
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-          Most businesses are fully live within <strong style={{ color: 'rgba(255,255,255,0.5)' }}>48 hours</strong> of completing setup. We&apos;ll email you when your AI receptionist is ready.
-        </p>
+      {/* Quick actions */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+        {[
+          { href: '/dashboard/calls',    label: 'Call history',   sublabel: 'All calls & transcripts', icon: Phone,     color: '#0ea5e9' },
+          { href: '/dashboard/bookings', label: 'Bookings',       sublabel: 'Manage appointments',     icon: Calendar,  color: '#a78bfa' },
+          { href: '/dashboard/settings', label: 'Settings',       sublabel: 'Configure Amy',           icon: Zap,       color: '#f59e0b' },
+          { href: '/dashboard/billing',  label: 'Billing',        sublabel: 'Plan & usage',            icon: BarChart3, color: '#22c55e' },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <a
+              key={item.href}
+              href={item.href}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '16px 18px', borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.06)',
+                background: '#0f0f0f',
+                textDecoration: 'none',
+                transition: 'border-color 0.18s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = `${item.color}35`)}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)')}
+            >
+              <div style={{
+                width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                background: `${item.color}10`, border: `1px solid ${item.color}20`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon size={15} color={item.color} />
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{item.label}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>{item.sublabel}</div>
+              </div>
+              <ArrowRight size={13} color="rgba(255,255,255,0.15)" style={{ marginLeft: 'auto' }} />
+            </a>
+          );
+        })}
       </div>
     </div>
   );
