@@ -88,6 +88,87 @@ export async function sendWelcomeEmail(
   });
 }
 
+export async function sendCallSummaryEmail(
+  to: string,
+  {
+    businessName,
+    callerNumber,
+    duration,
+    transcript,
+    summary,
+    outcome,
+  }: {
+    businessName: string;
+    callerNumber: string;
+    duration: number | null;
+    transcript: string | null;
+    summary: string | null;
+    outcome: string;
+  }
+) {
+  const durationText = duration
+    ? `${Math.floor(duration / 60)}m ${duration % 60}s`
+    : '—';
+
+  const outcomeColors: Record<string, string> = {
+    booked: '#22c55e',
+    info: '#0ea5e9',
+    missed: '#ef4444',
+    callback: '#f59e0b',
+  };
+  const outcomeColor = outcomeColors[outcome] ?? '#94a3b8';
+
+  const summarySection = summary
+    ? `<div style="background:rgba(14,165,233,0.05);border:1px solid rgba(14,165,233,0.15);border-radius:12px;padding:16px;margin-top:16px;">
+        <p style="margin:0 0 6px;font-size:11px;font-weight:600;color:#0ea5e9;letter-spacing:0.1em;text-transform:uppercase;">AI Summary</p>
+        <p style="margin:0;font-size:14px;color:#cbd5e1;line-height:1.6;">${summary}</p>
+       </div>`
+    : '';
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Amy handled a call — ${businessName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:520px;margin:0 auto;padding:32px 20px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <span style="font-size:20px;font-weight:800;color:white;letter-spacing:-0.03em;">AImie<span style="color:#0ea5e9;">.</span></span>
+    </div>
+    <div style="background:#0f0f0f;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:28px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${outcomeColor};flex-shrink:0;"></div>
+        <p style="margin:0;font-size:13px;font-weight:600;color:${outcomeColor};text-transform:uppercase;letter-spacing:0.06em;">${outcome}</p>
+      </div>
+      <h2 style="margin:0 0 4px;font-size:18px;font-weight:700;color:white;">New call — ${businessName}</h2>
+      <p style="margin:0 0 20px;font-size:13px;color:rgba(255,255,255,0.35);">Amy just handled an inbound call</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;">
+        <div style="background:#0a0a0a;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:14px;">
+          <p style="margin:0 0 3px;font-size:10px;color:rgba(255,255,255,0.3);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Caller</p>
+          <p style="margin:0;font-size:14px;font-weight:600;color:white;font-family:monospace;">${callerNumber}</p>
+        </div>
+        <div style="background:#0a0a0a;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:14px;">
+          <p style="margin:0 0 3px;font-size:10px;color:rgba(255,255,255,0.3);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Duration</p>
+          <p style="margin:0;font-size:14px;font-weight:600;color:white;">${durationText}</p>
+        </div>
+      </div>
+      ${summarySection}
+      <div style="text-align:center;margin-top:24px;">
+        <a href="${APP_URL}/dashboard/calls" style="display:inline-block;background:#0ea5e9;color:white;font-weight:600;font-size:13px;text-decoration:none;padding:10px 22px;border-radius:8px;">
+          View in dashboard →
+        </a>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.15);margin-top:20px;">AImie Solutions · Melbourne, Australia</p>
+  </div>
+</body>
+</html>`,
+  });
+}
+
 export async function sendFirstCallEmail(
   to: string,
   {

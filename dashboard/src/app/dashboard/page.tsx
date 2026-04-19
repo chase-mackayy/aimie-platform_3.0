@@ -75,9 +75,15 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        // Check onboarding first
+        // Check onboarding first — only redirect if we have a clear signal
         const ob = await fetch('/api/onboarding').then((r) => r.json());
-        if ((ob.onboardingStep ?? 0) < 4) {
+        // If API errored or step is explicitly set and incomplete → onboarding
+        if (!ob.error && typeof ob.onboardingStep === 'number' && ob.onboardingStep < 4) {
+          router.replace('/dashboard/onboarding');
+          return;
+        }
+        // Also redirect if no business exists at all (brand new user)
+        if (!ob.error && ob.onboardingStep === undefined && !ob.business) {
           router.replace('/dashboard/onboarding');
           return;
         }

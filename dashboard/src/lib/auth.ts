@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { twoFactor } from 'better-auth/plugins/two-factor';
 import { db } from './db';
 import * as schema from './db/schema';
 import { resend } from './resend';
@@ -14,19 +15,57 @@ export const auth = betterAuth({
       session: schema.sessions,
       account: schema.accounts,
       verification: schema.verifications,
+      twoFactor: schema.twoFactors,
     },
   }),
+  plugins: [
+    twoFactor({
+      issuer: 'AImie Solutions',
+      otpOptions: {
+        async sendOTP({ user, otp }) {
+          await resend.emails.send({
+            from: 'AImie Solutions <hello@aimiesolutions.com>',
+            to: user.email,
+            subject: 'Your AImie login code',
+            html: `
+              <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0a0a;color:#fff;border-radius:12px;">
+                <div style="text-align:center;margin-bottom:28px;">
+                  <span style="font-size:22px;font-weight:800;color:white;letter-spacing:-0.03em;">AImie<span style="color:#0ea5e9;">.</span></span>
+                </div>
+                <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;text-align:center;">Your verification code</h2>
+                <p style="color:rgba(255,255,255,0.5);font-size:14px;text-align:center;margin-bottom:28px;">
+                  Enter this code to complete your sign in. It expires in 10 minutes.
+                </p>
+                <div style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.25);border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
+                  <span style="font-size:36px;font-weight:800;color:#0ea5e9;letter-spacing:0.15em;font-family:monospace;">${otp}</span>
+                </div>
+                <p style="color:rgba(255,255,255,0.25);font-size:12px;text-align:center;">
+                  If you didn't request this, you can safely ignore it.
+                </p>
+                <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:24px 0;" />
+                <p style="color:rgba(255,255,255,0.15);font-size:11px;text-align:center;">
+                  AImie Solutions Pty Ltd · ABN 24 690 118 275 · Melbourne, Victoria
+                </p>
+              </div>
+            `,
+          });
+        },
+      },
+    }),
+  ],
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
     sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       await resend.emails.send({
-        from: 'AImie Solutions <onboarding@resend.dev>',
+        from: 'AImie Solutions <hello@aimiesolutions.com>',
         to: user.email,
         subject: 'Verify your AImie account',
         html: `
           <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0a0a;color:#fff;border-radius:12px;">
-            <img src="${APP_URL}/logo-full.jpeg" alt="AImie Solutions" style="height:28px;margin-bottom:24px;" />
+            <div style="text-align:center;margin-bottom:24px;">
+              <span style="font-size:22px;font-weight:800;color:white;letter-spacing:-0.03em;">AImie<span style="color:#0ea5e9;">.</span></span>
+            </div>
             <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;">Verify your email</h2>
             <p style="color:rgba(255,255,255,0.6);font-size:15px;line-height:1.6;margin-bottom:28px;">
               Click the button below to verify your email address and activate your AImie account.
@@ -35,7 +74,7 @@ export const auth = betterAuth({
               Verify Email →
             </a>
             <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-top:24px;">
-              This link expires in 24 hours. If you didn&apos;t create an account, you can safely ignore this email.
+              This link expires in 24 hours.
             </p>
             <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;" />
             <p style="color:rgba(255,255,255,0.2);font-size:12px;">
@@ -47,12 +86,14 @@ export const auth = betterAuth({
     },
     sendResetPasswordEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       await resend.emails.send({
-        from: 'AImie Solutions <onboarding@resend.dev>',
+        from: 'AImie Solutions <hello@aimiesolutions.com>',
         to: user.email,
         subject: 'Reset your AImie password',
         html: `
           <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0a0a;color:#fff;border-radius:12px;">
-            <img src="${APP_URL}/logo-full.jpeg" alt="AImie Solutions" style="height:28px;margin-bottom:24px;" />
+            <div style="text-align:center;margin-bottom:24px;">
+              <span style="font-size:22px;font-weight:800;color:white;letter-spacing:-0.03em;">AImie<span style="color:#0ea5e9;">.</span></span>
+            </div>
             <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;">Reset your password</h2>
             <p style="color:rgba(255,255,255,0.6);font-size:15px;line-height:1.6;margin-bottom:28px;">
               Click the button below to set a new password for your account.
@@ -61,7 +102,7 @@ export const auth = betterAuth({
               Reset Password →
             </a>
             <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-top:24px;">
-              This link expires in 1 hour. If you didn&apos;t request a password reset, you can safely ignore this email.
+              This link expires in 1 hour.
             </p>
             <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;" />
             <p style="color:rgba(255,255,255,0.2);font-size:12px;">
@@ -83,7 +124,9 @@ export const auth = betterAuth({
   trustedOrigins: [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://aimiesolutions.com',
     'https://aimiesolutions.com.au',
+    'https://www.aimiesolutions.com',
     'https://dashboard-seven-nu-97.vercel.app',
     APP_URL,
   ],

@@ -7,8 +7,17 @@ export const users = pgTable('users', {
   emailVerified: boolean('email_verified').default(false),
   image: text('image'),
   role: text('role').default('user'),           // 'user' | 'admin'
+  twoFactorEnabled: boolean('two_factor_enabled').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const twoFactors = pgTable('two_factors', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id),
+  secret: text('secret').notNull(),
+  backupCodes: text('backup_codes').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const businesses = pgTable('businesses', {

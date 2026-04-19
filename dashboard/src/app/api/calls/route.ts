@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { calls, businesses, users } from '@/lib/db/schema';
 import { getSession, getBusiness } from '@/lib/session';
 import { eq, desc, and, ilike, or, count } from 'drizzle-orm';
-import { sendFirstCallEmail } from '@/lib/emails';
+import { sendFirstCallEmail, sendCallSummaryEmail } from '@/lib/emails';
 
 export async function GET(req: NextRequest) {
   try {
@@ -67,37 +67,41 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // Check if this is the first call and we haven't sent the email yet
-    if (!business.firstCallEmailSent) {
-      const [{ total }] = await db
-        .select({ total: count() })
-        .from(calls)
-        .where(eq(calls.businessId, business.id));
+    // Look up user email for notifications
+    const [user] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
 
-      if (total === 1) {
-        // Look up the user's email
-        const [user] = await db
-          .select({ email: users.email })
-          .from(users)
-          .where(eq(users.id, session.user.id))
-          .limit(1);
+    if (user?.email) {
+      const callData = {
+        businessName: business.name,
+        callerNumber: callerNumber ?? 'Unknown',
+        duration: typeof duration === 'number' ? duration : null,
+        transcript: transcript ?? null,
+        summary: summary ?? null,
+        outcome: outcome ?? 'info',
+      };
 
-        if (user?.email) {
-          // Send first-call email (don't block response)
-          sendFirstCallEmail(user.email, {
-            businessName: business.name,
-            callerNumber: callerNumber ?? 'Unknown',
-            duration: typeof duration === 'number' ? duration : null,
-            transcript: transcript ?? null,
-            summary: summary ?? null,
-          }).catch((err) => console.error('First-call email failed:', err));
+      // First call — send special first-call email
+      if (!business.firstCallEmailSent) {
+        const [{ total }] = await db
+          .select({ total: count() })
+          .from(calls)
+          .where(eq(calls.businessId, business.id));
 
-          // Mark as sent
-          await db
-            .update(businesses)
+        if (total === 1) {
+          sendFirstCallEmail(user.email, callData)
+            .catch((err) => console.error('First-call email failed:', err));
+          await db.update(businesses)
             .set({ firstCallEmailSent: true })
             .where(eq(businesses.id, business.id));
         }
+      } else {
+        // Send call summary on every subsequent call (non-blocking)
+        sendCallSummaryEmail(user.email, callData)
+          .catch((err) => console.error('Call summary email failed:', err));
       }
     }
 
