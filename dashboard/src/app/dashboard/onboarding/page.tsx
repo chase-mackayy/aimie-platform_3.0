@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Building2,
@@ -9,13 +9,12 @@ import {
   Zap,
   ChevronRight,
   ChevronLeft,
-  CheckCircle,
+  CheckCircle2,
   Phone,
   Clock,
-  ToggleLeft,
-  ToggleRight,
   Copy,
   Check,
+  ArrowRight,
 } from 'lucide-react';
 
 const INDUSTRIES = [
@@ -48,10 +47,10 @@ const BOOKING_PLATFORMS = [
 ];
 
 const TONES = [
-  { id: 'professional', label: 'Professional', desc: 'Formal and efficient', emoji: '💼' },
-  { id: 'friendly', label: 'Friendly', desc: 'Warm and conversational', emoji: '😊' },
-  { id: 'energetic', label: 'Energetic', desc: 'Upbeat and enthusiastic', emoji: '⚡' },
-  { id: 'calm', label: 'Calm', desc: 'Measured and reassuring', emoji: '🌊' },
+  { id: 'professional', label: 'Professional', desc: 'Formal and efficient', color: '#6366f1' },
+  { id: 'friendly', label: 'Friendly', desc: 'Warm and conversational', color: '#0ea5e9' },
+  { id: 'energetic', label: 'Energetic', desc: 'Upbeat and enthusiastic', color: '#f59e0b' },
+  { id: 'calm', label: 'Calm', desc: 'Measured and reassuring', color: '#10b981' },
 ];
 
 const DEFAULT_HOURS = [
@@ -65,32 +64,53 @@ const DEFAULT_HOURS = [
 ];
 
 const STEPS = [
-  { label: 'Business details', icon: Building2 },
-  { label: 'Booking platform', icon: Calendar },
-  { label: 'Customise Amy', icon: Mic2 },
-  { label: 'Go live', icon: Zap },
+  { label: 'Business details', sublabel: 'Tell Amy about you', icon: Building2 },
+  { label: 'Booking platform', sublabel: 'Connect your system', icon: Calendar },
+  { label: 'Customise Amy', sublabel: 'Define her personality', icon: Mic2 },
+  { label: 'Go live', sublabel: 'Start taking calls', icon: Zap },
 ];
 
 function Toggle({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
   return (
-    <button type="button" onClick={onChange} className="transition-all duration-200">
-      {enabled ? (
-        <ToggleRight className="h-6 w-6 text-[#0ea5e9]" />
-      ) : (
-        <ToggleLeft className="h-6 w-6 text-[#64748b]" />
-      )}
+    <button
+      type="button"
+      onClick={onChange}
+      style={{
+        width: 44,
+        height: 24,
+        borderRadius: 12,
+        background: enabled ? '#0ea5e9' : 'rgba(255,255,255,0.08)',
+        border: `1px solid ${enabled ? '#0ea5e9' : 'rgba(255,255,255,0.1)'}`,
+        position: 'relative',
+        transition: 'all 0.2s ease',
+        cursor: 'pointer',
+        flexShrink: 0,
+      }}
+    >
+      <div style={{
+        position: 'absolute',
+        top: 2,
+        left: enabled ? 22 : 2,
+        width: 18,
+        height: 18,
+        borderRadius: '50%',
+        background: 'white',
+        transition: 'left 0.2s ease',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+      }} />
     </button>
   );
 }
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0); // 0-indexed (0 = step 1)
+  const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [telnyxNumber, setTelnyxNumber] = useState<string | null>(null);
+  const [animating, setAnimating] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
-  // Step 1 state
   const [businessName, setBusinessName] = useState('');
   const [industry, setIndustry] = useState('');
   const [address, setAddress] = useState('');
@@ -99,11 +119,9 @@ export default function OnboardingPage() {
   const [postcode, setPostcode] = useState('');
   const [hours, setHours] = useState(DEFAULT_HOURS);
 
-  // Step 2 state
   const [bookingPlatform, setBookingPlatform] = useState('');
   const [bookingApiKey, setBookingApiKey] = useState('');
 
-  // Step 3 state
   const [amyName, setAmyName] = useState('');
   const [tone, setTone] = useState('professional');
   const [specialInstructions, setSpecialInstructions] = useState('');
@@ -125,7 +143,6 @@ export default function OnboardingPage() {
           if (d.business.amyName) setAmyName(d.business.amyName);
           if (d.business.telnyxNumber) setTelnyxNumber(d.business.telnyxNumber);
         }
-        // If already past onboarding, redirect to dashboard
         if (d.onboardingStep >= 4) {
           router.push('/dashboard');
         } else if (d.onboardingStep > 0) {
@@ -147,6 +164,11 @@ export default function OnboardingPage() {
     setSaving(false);
   };
 
+  const transition = (dir: 'next' | 'back', fn: () => void) => {
+    setAnimating(true);
+    setTimeout(() => { fn(); setAnimating(false); }, 220);
+  };
+
   const handleNext = async () => {
     if (currentStep === 0) {
       await saveStep(1, { name: businessName, industry, address, suburb, state, postcode, hours });
@@ -159,13 +181,13 @@ export default function OnboardingPage() {
       router.push('/dashboard');
       return;
     }
-    setCurrentStep((s) => s + 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    transition('next', () => setCurrentStep((s) => s + 1));
+    formRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
-    setCurrentStep((s) => Math.max(0, s - 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    transition('back', () => setCurrentStep((s) => Math.max(0, s - 1)));
+    formRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const copyNumber = () => {
@@ -178,485 +200,888 @@ export default function OnboardingPage() {
 
   const selectedPlatform = BOOKING_PLATFORMS.find((p) => p.id === bookingPlatform);
 
-  const inputClass =
-    'w-full bg-[#0a0a0a] border border-[#1e3a5f] text-[#f0f9ff] rounded-lg px-4 py-2.5 text-sm placeholder-[#334155] focus:outline-none focus:border-[#0ea5e9] transition-colors';
-  const selectClass =
-    'w-full bg-[#0a0a0a] border border-[#1e3a5f] text-[#f0f9ff] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#0ea5e9] transition-colors appearance-none cursor-pointer';
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    color: '#f8fafc',
+    borderRadius: 10,
+    padding: '11px 14px',
+    fontSize: 14,
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    boxSizing: 'border-box',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 11,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.35)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    marginBottom: 6,
+  };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center py-10 px-4">
-      {/* Logo */}
-      <div className="mb-8">
-        <span className="text-2xl font-extrabold text-white tracking-tight">
-          AImie<span className="text-[#0ea5e9]">.</span>
-        </span>
-      </div>
+    <div style={{ minHeight: '100vh', background: '#050507', display: 'flex', fontFamily: 'inherit' }}>
 
-      {/* Progress bar */}
-      <div className="w-full max-w-2xl mb-8">
-        <div className="flex items-center justify-between mb-3">
-          {STEPS.map((step, i) => {
-            const Icon = step.icon;
-            const done = i < currentStep;
-            const active = i === currentStep;
-            return (
-              <div key={step.label} className="flex flex-col items-center gap-1.5 flex-1">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all duration-300 ${
-                    done
-                      ? 'bg-[rgba(34,197,94,0.12)] border-[rgba(34,197,94,0.35)]'
-                      : active
-                      ? 'bg-[rgba(14,165,233,0.15)] border-[rgba(14,165,233,0.4)]'
-                      : 'bg-[#0f0f0f] border-[#1e3a5f]'
-                  }`}
-                >
-                  {done ? (
-                    <CheckCircle className="h-4 w-4 text-[#22c55e]" />
-                  ) : (
-                    <Icon
-                      className={`h-4 w-4 ${active ? 'text-[#0ea5e9]' : 'text-[#334155]'}`}
-                    />
+      {/* ── LEFT PANEL ── */}
+      <div style={{
+        width: 340,
+        minWidth: 340,
+        background: 'linear-gradient(160deg, #06080f 0%, #0a0d1a 60%, #050507 100%)',
+        borderRight: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '40px 32px',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflow: 'hidden',
+      }} className="hidden lg:flex">
+
+        {/* Ambient glow */}
+        <div style={{
+          position: 'absolute',
+          top: -80,
+          left: -80,
+          width: 320,
+          height: 320,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: 40,
+          right: -60,
+          width: 200,
+          height: 200,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Logo */}
+        <div style={{ marginBottom: 56, position: 'relative' }}>
+          <span style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>
+            AImie<span style={{ color: '#0ea5e9' }}>.</span>
+          </span>
+        </div>
+
+        {/* Step progress */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {STEPS.map((step, i) => {
+              const Icon = step.icon;
+              const done = i < currentStep;
+              const active = i === currentStep;
+              const isLast = i === STEPS.length - 1;
+              return (
+                <div key={step.label} style={{ display: 'flex', gap: 16, position: 'relative' }}>
+                  {/* Line */}
+                  {!isLast && (
+                    <div style={{
+                      position: 'absolute',
+                      left: 19,
+                      top: 40,
+                      width: 2,
+                      height: 48,
+                      background: done ? 'rgba(14,165,233,0.5)' : 'rgba(255,255,255,0.06)',
+                      transition: 'background 0.4s ease',
+                    }} />
                   )}
+                  {/* Icon */}
+                  <div style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    border: `1px solid ${done ? 'rgba(34,197,94,0.4)' : active ? 'rgba(14,165,233,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                    background: done ? 'rgba(34,197,94,0.1)' : active ? 'rgba(14,165,233,0.12)' : 'rgba(255,255,255,0.03)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    transition: 'all 0.3s ease',
+                    boxShadow: active ? '0 0 20px rgba(14,165,233,0.15)' : 'none',
+                    zIndex: 1,
+                  }}>
+                    {done
+                      ? <CheckCircle2 size={16} color="#22c55e" />
+                      : <Icon size={16} color={active ? '#0ea5e9' : 'rgba(255,255,255,0.2)'} />
+                    }
+                  </div>
+                  {/* Labels */}
+                  <div style={{ paddingTop: 10, paddingBottom: isLast ? 0 : 48 }}>
+                    <div style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: done ? 'rgba(255,255,255,0.4)' : active ? '#f8fafc' : 'rgba(255,255,255,0.2)',
+                      marginBottom: 2,
+                      transition: 'color 0.3s',
+                    }}>
+                      {step.label}
+                    </div>
+                    <div style={{
+                      fontSize: 11,
+                      color: active ? 'rgba(14,165,233,0.7)' : 'rgba(255,255,255,0.15)',
+                      transition: 'color 0.3s',
+                    }}>
+                      {step.sublabel}
+                    </div>
+                  </div>
                 </div>
-                <span
-                  className={`text-xs font-medium hidden sm:block ${
-                    done ? 'text-[#22c55e]' : active ? 'text-[#f0f9ff]' : 'text-[#334155]'
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-        {/* Connector line */}
-        <div className="h-1 bg-[#0f1929] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] rounded-full transition-all duration-500"
-            style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-1.5">
-          <span className="text-xs text-[#334155]">Step {currentStep + 1} of {STEPS.length}</span>
-          <span className="text-xs text-[#334155]">{Math.round((currentStep / STEPS.length) * 100)}% complete</span>
+
+        {/* Bottom quote */}
+        <div style={{
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          paddingTop: 24,
+        }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', lineHeight: 1.6 }}>
+            &ldquo;Amy never misses a call. She books, answers, and represents your business — 24/7.&rdquo;
+          </p>
         </div>
       </div>
 
-      {/* Card */}
-      <div className="w-full max-w-2xl bg-[#0f0f0f] border border-[rgba(255,255,255,0.07)] rounded-2xl p-8 mb-6">
+      {/* ── RIGHT PANEL ── */}
+      <div
+        ref={formRef}
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '40px 24px 60px',
+        }}
+      >
+        {/* Mobile logo */}
+        <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 560 }} className="lg:hidden">
+          <span style={{ fontSize: 20, fontWeight: 800, color: 'white' }}>AImie<span style={{ color: '#0ea5e9' }}>.</span></span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Step {currentStep + 1} of {STEPS.length}</span>
+        </div>
 
-        {/* Step 1 — Business details */}
-        {currentStep === 0 && (
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-[rgba(14,165,233,0.1)] border border-[rgba(14,165,233,0.2)] flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-[#0ea5e9]" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">Your business details</h1>
-                <p className="text-sm text-[#64748b]">Amy uses this to answer questions accurately</p>
-              </div>
-            </div>
+        {/* Progress bar — mobile only */}
+        <div style={{ width: '100%', maxWidth: 560, marginBottom: 32 }} className="lg:hidden">
+          <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%',
+              width: `${((currentStep + 1) / STEPS.length) * 100}%`,
+              background: 'linear-gradient(90deg, #0ea5e9, #38bdf8)',
+              borderRadius: 2,
+              transition: 'width 0.4s ease',
+            }} />
+          </div>
+        </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">Business name *</label>
+        {/* Form card */}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 560,
+            opacity: animating ? 0 : 1,
+            transform: animating ? 'translateY(8px)' : 'translateY(0)',
+            transition: 'opacity 0.22s ease, transform 0.22s ease',
+          }}
+        >
+
+          {/* Step 1 — Business details */}
+          {currentStep === 0 && (
+            <div>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'rgba(14,165,233,0.08)',
+                  border: '1px solid rgba(14,165,233,0.2)',
+                  borderRadius: 20,
+                  padding: '4px 12px',
+                  marginBottom: 16,
+                }}>
+                  <Building2 size={12} color="#0ea5e9" />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Step 1</span>
+                </div>
+                <h1 style={{ fontSize: 28, fontWeight: 700, color: 'white', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>
+                  Your business details
+                </h1>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+                  Amy uses this to answer every caller accurately — the more detail, the better she performs.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div>
+                  <label style={labelStyle}>Business name <span style={{ color: '#0ea5e9' }}>*</span></label>
                   <input
-                    className={inputClass}
+                    style={inputStyle}
                     placeholder="e.g. Mitchell Plumbing"
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
+                    onFocus={(e) => (e.target.style.borderColor = 'rgba(14,165,233,0.5)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
                     required
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">Industry *</label>
-                  <select
-                    className={selectClass}
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    required
-                  >
-                    <option value="">Select your industry</option>
-                    {INDUSTRIES.map((ind) => (
-                      <option key={ind} value={ind}>{ind}</option>
-                    ))}
-                  </select>
+                <div>
+                  <label style={labelStyle}>Industry <span style={{ color: '#0ea5e9' }}>*</span></label>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      style={{ ...inputStyle, appearance: 'none', cursor: 'pointer', paddingRight: 36 }}
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      onFocus={(e) => ((e.target as HTMLSelectElement).style.borderColor = 'rgba(14,165,233,0.5)')}
+                      onBlur={(e) => ((e.target as HTMLSelectElement).style.borderColor = 'rgba(255,255,255,0.08)')}
+                    >
+                      <option value="">Select your industry</option>
+                      {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
+                    </select>
+                    <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 4l4 4 4-4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">Street address</label>
+                <div>
+                  <label style={labelStyle}>Street address</label>
                   <input
-                    className={inputClass}
+                    style={inputStyle}
                     placeholder="e.g. 123 High Street"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
+                    onFocus={(e) => (e.target.style.borderColor = 'rgba(14,165,233,0.5)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">Suburb</label>
-                  <input
-                    className={inputClass}
-                    placeholder="e.g. Fitzroy"
-                    value={suburb}
-                    onChange={(e) => setSuburb(e.target.value)}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">State</label>
-                    <select className={selectClass} value={state} onChange={(e) => setState(e.target.value)}>
-                      {['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'].map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">Postcode</label>
+                    <label style={labelStyle}>Suburb</label>
                     <input
-                      className={inputClass}
-                      placeholder="3000"
-                      value={postcode}
-                      onChange={(e) => setPostcode(e.target.value)}
+                      style={inputStyle}
+                      placeholder="e.g. Fitzroy"
+                      value={suburb}
+                      onChange={(e) => setSuburb(e.target.value)}
+                      onFocus={(e) => (e.target.style.borderColor = 'rgba(14,165,233,0.5)')}
+                      onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Business hours */}
-              <div>
-                <div className="flex items-center gap-2 mb-3 mt-2">
-                  <Clock className="h-4 w-4 text-[#0ea5e9]" />
-                  <label className="text-xs font-semibold text-[#64748b] uppercase tracking-wider">Business hours</label>
-                </div>
-                <div className="space-y-2 bg-[#0a0a0a] border border-[#1e3a5f] rounded-xl p-4">
-                  {hours.map((h, i) => (
-                    <div key={h.day} className="flex items-center gap-3 py-1.5 border-b border-[#1a2744] last:border-0">
-                      <Toggle
-                        enabled={h.enabled}
-                        onChange={() =>
-                          setHours((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, enabled: !x.enabled } : x))
-                          )
-                        }
-                      />
-                      <span className={`w-24 text-sm font-medium ${h.enabled ? 'text-[#f0f9ff]' : 'text-[#334155]'}`}>
-                        {h.day}
-                      </span>
-                      {h.enabled ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="time"
-                            value={h.open}
-                            onChange={(e) =>
-                              setHours((prev) =>
-                                prev.map((x, j) => (j === i ? { ...x, open: e.target.value } : x))
-                              )
-                            }
-                            className="bg-[#0f1929] border border-[#1e3a5f] text-[#f0f9ff] rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-[#0ea5e9]"
-                          />
-                          <span className="text-[#334155] text-sm">–</span>
-                          <input
-                            type="time"
-                            value={h.close}
-                            onChange={(e) =>
-                              setHours((prev) =>
-                                prev.map((x, j) => (j === i ? { ...x, close: e.target.value } : x))
-                              )
-                            }
-                            className="bg-[#0f1929] border border-[#1e3a5f] text-[#f0f9ff] rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-[#0ea5e9]"
-                          />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label style={labelStyle}>State</label>
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          style={{ ...inputStyle, appearance: 'none', cursor: 'pointer', paddingRight: 28 }}
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                        >
+                          {['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'].map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 4l4 4 4-4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
                         </div>
-                      ) : (
-                        <span className="text-xs text-[#334155] italic">Closed</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2 — Booking platform */}
-        {currentStep === 1 && (
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-[rgba(14,165,233,0.1)] border border-[rgba(14,165,233,0.2)] flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-[#0ea5e9]" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">Booking platform</h1>
-                <p className="text-sm text-[#64748b]">Amy will book appointments directly into your system</p>
-              </div>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              {BOOKING_PLATFORMS.map((platform) => (
-                <button
-                  key={platform.id}
-                  type="button"
-                  onClick={() => {
-                    setBookingPlatform(platform.id);
-                    if (!platform.needsKey) setBookingApiKey('');
-                  }}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200 ${
-                    bookingPlatform === platform.id
-                      ? 'border-[#0ea5e9] bg-[rgba(14,165,233,0.06)]'
-                      : 'border-[#1e3a5f] bg-[#0a0a0a] hover:border-[rgba(14,165,233,0.4)]'
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      bookingPlatform === platform.id
-                        ? 'border-[#0ea5e9] bg-[#0ea5e9]'
-                        : 'border-[#334155]'
-                    }`}
-                  >
-                    {bookingPlatform === platform.id && (
-                      <div className="w-2 h-2 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span
-                    className={`text-sm font-medium ${
-                      bookingPlatform === platform.id ? 'text-[#f0f9ff]' : 'text-[#94a3b8]'
-                    }`}
-                  >
-                    {platform.label}
-                  </span>
-                  {platform.id === 'manual' && (
-                    <span className="ml-auto text-xs text-[#22c55e] bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-full px-2 py-0.5">
-                      Recommended
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {selectedPlatform?.needsKey && (
-              <div className="border border-[rgba(14,165,233,0.2)] bg-[rgba(14,165,233,0.03)] rounded-xl p-4">
-                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-2">
-                  {selectedPlatform.label} API key
-                </label>
-                <input
-                  className={inputClass}
-                  type="password"
-                  placeholder="Paste your API key here"
-                  value={bookingApiKey}
-                  onChange={(e) => setBookingApiKey(e.target.value)}
-                />
-                <p className="text-xs text-[#64748b] mt-2">
-                  Your key is encrypted at rest and never shared. You can add it later from Settings if you don&apos;t have it handy.
-                </p>
-              </div>
-            )}
-
-            {bookingPlatform === 'manual' && (
-              <div className="border border-[rgba(34,197,94,0.2)] bg-[rgba(34,197,94,0.03)] rounded-xl p-4">
-                <p className="text-sm text-[#94a3b8] leading-relaxed">
-                  Our team will configure your booking integration within 24 hours of you going live. We&apos;ll reach out to collect the details we need.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 3 — Customise Amy */}
-        {currentStep === 2 && (
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-[rgba(14,165,233,0.1)] border border-[rgba(14,165,233,0.2)] flex items-center justify-center">
-                <Mic2 className="h-5 w-5 text-[#0ea5e9]" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">Customise Amy</h1>
-                <p className="text-sm text-[#64748b]">Personalise how your AI receptionist presents your business</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">
-                  What name should Amy use when answering?
-                </label>
-                <input
-                  className={inputClass}
-                  placeholder={`e.g. Amy from ${businessName || 'your business'}, or just your business name`}
-                  value={amyName}
-                  onChange={(e) => setAmyName(e.target.value)}
-                />
-                <p className="text-xs text-[#64748b] mt-1.5">
-                  e.g. &quot;Thank you for calling Mitchell Plumbing, I&apos;m Amy&quot; — or &quot;Mitchell Plumbing, Amy speaking&quot;
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">Tone</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {TONES.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTone(t.id)}
-                      className={`p-4 rounded-xl border text-center transition-all duration-200 ${
-                        tone === t.id
-                          ? 'border-[#0ea5e9] bg-[rgba(14,165,233,0.08)]'
-                          : 'border-[#1e3a5f] bg-[#0a0a0a] hover:border-[rgba(14,165,233,0.4)]'
-                      }`}
-                    >
-                      <div className="text-2xl mb-1.5">{t.emoji}</div>
-                      <div className={`text-sm font-semibold mb-0.5 ${tone === t.id ? 'text-[#0ea5e9]' : 'text-[#f0f9ff]'}`}>
-                        {t.label}
                       </div>
-                      <div className="text-xs text-[#64748b]">{t.desc}</div>
-                    </button>
-                  ))}
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Postcode</label>
+                      <input
+                        style={inputStyle}
+                        placeholder="3000"
+                        value={postcode}
+                        onChange={(e) => setPostcode(e.target.value)}
+                        onFocus={(e) => (e.target.style.borderColor = 'rgba(14,165,233,0.5)')}
+                        onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Business hours */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <Clock size={13} color="#0ea5e9" />
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>Business hours</label>
+                  </div>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                  }}>
+                    {hours.map((h, i) => (
+                      <div
+                        key={h.day}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: '10px 16px',
+                          borderBottom: i < hours.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                          background: h.enabled ? 'transparent' : 'transparent',
+                        }}
+                      >
+                        <Toggle
+                          enabled={h.enabled}
+                          onChange={() =>
+                            setHours((prev) =>
+                              prev.map((x, j) => (j === i ? { ...x, enabled: !x.enabled } : x))
+                            )
+                          }
+                        />
+                        <span style={{
+                          width: 88,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          color: h.enabled ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
+                          transition: 'color 0.2s',
+                        }}>
+                          {h.day}
+                        </span>
+                        {h.enabled ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <input
+                              type="time"
+                              value={h.open}
+                              onChange={(e) =>
+                                setHours((prev) =>
+                                  prev.map((x, j) => (j === i ? { ...x, open: e.target.value } : x))
+                                )
+                              }
+                              style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                color: '#f8fafc',
+                                borderRadius: 8,
+                                padding: '4px 10px',
+                                fontSize: 12,
+                                outline: 'none',
+                              }}
+                            />
+                            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>—</span>
+                            <input
+                              type="time"
+                              value={h.close}
+                              onChange={(e) =>
+                                setHours((prev) =>
+                                  prev.map((x, j) => (j === i ? { ...x, close: e.target.value } : x))
+                                )
+                              }
+                              style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                color: '#f8fafc',
+                                borderRadius: 8,
+                                padding: '4px 10px',
+                                fontSize: 12,
+                                outline: 'none',
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)', fontStyle: 'italic' }}>Closed</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              <div>
-                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-1.5">
-                  Any specific instructions? <span className="text-[#334155] font-normal normal-case tracking-normal">(optional)</span>
-                </label>
-                <textarea
-                  className={`${inputClass} resize-none`}
-                  rows={4}
-                  placeholder={`e.g. Always offer the next available slot. If it's an emergency, ask for their location first. We don't service commercial properties.`}
-                  value={specialInstructions}
-                  onChange={(e) => setSpecialInstructions(e.target.value)}
-                />
-                <p className="text-xs text-[#64748b] mt-1.5">
-                  Keep it brief — bullet points work great. Amy will follow these in every call.
+          {/* Step 2 — Booking platform */}
+          {currentStep === 1 && (
+            <div>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'rgba(14,165,233,0.08)',
+                  border: '1px solid rgba(14,165,233,0.2)',
+                  borderRadius: 20,
+                  padding: '4px 12px',
+                  marginBottom: 16,
+                }}>
+                  <Calendar size={12} color="#0ea5e9" />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Step 2</span>
+                </div>
+                <h1 style={{ fontSize: 28, fontWeight: 700, color: 'white', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>
+                  Booking platform
+                </h1>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+                  Amy can book directly into your system — or we&apos;ll handle it manually for you.
                 </p>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* Step 4 — Go live */}
-        {currentStep === 3 && (
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-[rgba(34,197,94,0.1)] border border-[rgba(34,197,94,0.25)] flex items-center justify-center">
-                <Zap className="h-5 w-5 text-[#22c55e]" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">You&apos;re ready to go live!</h1>
-                <p className="text-sm text-[#64748b]">One last step — connect your phone number</p>
-              </div>
-            </div>
-
-            {/* Phone number display */}
-            <div className="bg-[#0a0a0a] border border-[rgba(14,165,233,0.25)] rounded-2xl p-6 mb-6 text-center">
-              <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
-                Your dedicated AI phone number
-              </p>
-              {telnyxNumber ? (
-                <>
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-3xl font-bold text-[#0ea5e9] font-mono tracking-wide">
-                      {telnyxNumber}
-                    </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {BOOKING_PLATFORMS.map((platform) => {
+                  const selected = bookingPlatform === platform.id;
+                  return (
                     <button
+                      key={platform.id}
                       type="button"
-                      onClick={copyNumber}
-                      className="p-2 rounded-lg border border-[rgba(14,165,233,0.3)] text-[#0ea5e9] hover:bg-[rgba(14,165,233,0.08)] transition-colors"
+                      onClick={() => {
+                        setBookingPlatform(platform.id);
+                        if (!platform.needsKey) setBookingApiKey('');
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 14,
+                        padding: '14px 16px',
+                        borderRadius: 12,
+                        border: `1px solid ${selected ? 'rgba(14,165,233,0.5)' : 'rgba(255,255,255,0.06)'}`,
+                        background: selected ? 'rgba(14,165,233,0.06)' : 'rgba(255,255,255,0.02)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.18s ease',
+                        boxShadow: selected ? '0 0 0 1px rgba(14,165,233,0.15) inset' : 'none',
+                      }}
                     >
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      <div style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: '50%',
+                        border: `2px solid ${selected ? '#0ea5e9' : 'rgba(255,255,255,0.15)'}`,
+                        background: selected ? '#0ea5e9' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.18s ease',
+                      }}>
+                        {selected && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />}
+                      </div>
+                      <span style={{
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: selected ? '#f8fafc' : 'rgba(255,255,255,0.45)',
+                        flex: 1,
+                        transition: 'color 0.18s',
+                      }}>
+                        {platform.label}
+                      </span>
+                      {platform.id === 'manual' && (
+                        <span style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: '#10b981',
+                          background: 'rgba(16,185,129,0.08)',
+                          border: '1px solid rgba(16,185,129,0.2)',
+                          borderRadius: 20,
+                          padding: '2px 10px',
+                        }}>
+                          Recommended
+                        </span>
+                      )}
                     </button>
-                  </div>
-                  <p className="text-xs text-[#64748b] mt-2">This is your Amy number — calls to it are handled by your AI receptionist</p>
-                </>
-              ) : (
-                <div>
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="h-2 w-2 rounded-full bg-[#0ea5e9] animate-pulse" />
-                    <span className="text-sm text-[#94a3b8]">Provisioning your number...</span>
-                  </div>
-                  <p className="text-xs text-[#64748b]">We&apos;ll email you as soon as your number is ready (usually within a few minutes)</p>
+                  );
+                })}
+              </div>
+
+              {selectedPlatform?.needsKey && (
+                <div style={{
+                  marginTop: 20,
+                  padding: 16,
+                  background: 'rgba(14,165,233,0.04)',
+                  border: '1px solid rgba(14,165,233,0.15)',
+                  borderRadius: 12,
+                }}>
+                  <label style={labelStyle}>{selectedPlatform.label} API key</label>
+                  <input
+                    style={inputStyle}
+                    type="password"
+                    placeholder="Paste your API key here"
+                    value={bookingApiKey}
+                    onChange={(e) => setBookingApiKey(e.target.value)}
+                    onFocus={(e) => (e.target.style.borderColor = 'rgba(14,165,233,0.5)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                  />
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 8, lineHeight: 1.5 }}>
+                    Encrypted at rest. You can add this later from Settings.
+                  </p>
+                </div>
+              )}
+
+              {bookingPlatform === 'manual' && (
+                <div style={{
+                  marginTop: 20,
+                  padding: 16,
+                  background: 'rgba(16,185,129,0.04)',
+                  border: '1px solid rgba(16,185,129,0.15)',
+                  borderRadius: 12,
+                }}>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+                    Our team will configure your booking integration within 24 hours of going live. We&apos;ll reach out to collect the details we need.
+                  </p>
                 </div>
               )}
             </div>
+          )}
 
-            {/* Instructions */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-[#f0f9ff]">How to get Amy answering your calls</h3>
-
-              <div className="flex items-start gap-4 p-4 bg-[#0a0a0a] border border-[#1e3a5f] rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-[rgba(14,165,233,0.1)] border border-[rgba(14,165,233,0.25)] flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-[#0ea5e9]">A</span>
+          {/* Step 3 — Customise Amy */}
+          {currentStep === 2 && (
+            <div>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'rgba(14,165,233,0.08)',
+                  border: '1px solid rgba(14,165,233,0.2)',
+                  borderRadius: 20,
+                  padding: '4px 12px',
+                  marginBottom: 16,
+                }}>
+                  <Mic2 size={12} color="#0ea5e9" />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Step 3</span>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#f0f9ff] mb-1">Forward your existing number</p>
-                  <p className="text-sm text-[#64748b] leading-relaxed">
-                    Keep your current number and set call forwarding to your AImie number. Your customers dial the same number they always have.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 p-4 bg-[#0a0a0a] border border-[#1e3a5f] rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-[rgba(14,165,233,0.1)] border border-[rgba(14,165,233,0.25)] flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-[#0ea5e9]">B</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#f0f9ff] mb-1">Use your AImie number directly</p>
-                  <p className="text-sm text-[#64748b] leading-relaxed">
-                    Update your website, Google Business, and social profiles with your new AImie number and it&apos;s live immediately.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 p-4 bg-[rgba(14,165,233,0.04)] border border-[rgba(14,165,233,0.15)] rounded-xl">
-                <Phone className="h-4 w-4 text-[#0ea5e9] flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-[#94a3b8] leading-relaxed">
-                  Not sure? Our Melbourne team will walk you through it. Reply to your welcome email or call{' '}
-                  <a href="tel:+61390226413" className="text-[#0ea5e9] font-semibold">+61 3 9022 6413</a>.
+                <h1 style={{ fontSize: 28, fontWeight: 700, color: 'white', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>
+                  Customise Amy
+                </h1>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+                  Define how Amy sounds and presents your business on every call.
                 </p>
               </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div>
+                  <label style={labelStyle}>Amy&apos;s name when answering</label>
+                  <input
+                    style={inputStyle}
+                    placeholder={`e.g. Amy, or ${businessName || 'your business name'}`}
+                    value={amyName}
+                    onChange={(e) => setAmyName(e.target.value)}
+                    onFocus={(e) => (e.target.style.borderColor = 'rgba(14,165,233,0.5)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                  />
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 6, lineHeight: 1.5 }}>
+                    e.g. &ldquo;Thank you for calling Mitchell Plumbing, Amy speaking&rdquo;
+                  </p>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Tone & personality</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {TONES.map((t) => {
+                      const selected = tone === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setTone(t.id)}
+                          style={{
+                            padding: '16px 14px',
+                            borderRadius: 12,
+                            border: `1px solid ${selected ? t.color : 'rgba(255,255,255,0.06)'}`,
+                            background: selected ? `${t.color}10` : 'rgba(255,255,255,0.02)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.18s ease',
+                            boxShadow: selected ? `0 0 20px ${t.color}15` : 'none',
+                          }}
+                        >
+                          <div style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: selected ? t.color : 'rgba(255,255,255,0.15)',
+                            marginBottom: 10,
+                            transition: 'background 0.18s',
+                          }} />
+                          <div style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: selected ? '#f8fafc' : 'rgba(255,255,255,0.4)',
+                            marginBottom: 3,
+                            transition: 'color 0.18s',
+                          }}>
+                            {t.label}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{t.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>
+                    Special instructions{' '}
+                    <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— optional</span>
+                  </label>
+                  <textarea
+                    style={{ ...inputStyle, resize: 'none' }}
+                    rows={4}
+                    placeholder={`e.g. Always offer the next available slot. If it's an emergency, ask for their location first.`}
+                    value={specialInstructions}
+                    onChange={(e) => setSpecialInstructions(e.target.value)}
+                    onFocus={(e) => (e.target.style.borderColor = 'rgba(14,165,233,0.5)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                  />
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 6, lineHeight: 1.5 }}>
+                    Bullet points work best. Amy follows these on every call.
+                  </p>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* Step 4 — Go live */}
+          {currentStep === 3 && (
+            <div>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'rgba(34,197,94,0.08)',
+                  border: '1px solid rgba(34,197,94,0.2)',
+                  borderRadius: 20,
+                  padding: '4px 12px',
+                  marginBottom: 16,
+                }}>
+                  <Zap size={12} color="#22c55e" />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Final step</span>
+                </div>
+                <h1 style={{ fontSize: 28, fontWeight: 700, color: 'white', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>
+                  You&apos;re ready to go live
+                </h1>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+                  Amy is configured. Now connect your phone number and she starts answering calls immediately.
+                </p>
+              </div>
+
+              {/* Phone number */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(14,165,233,0.08) 0%, rgba(99,102,241,0.06) 100%)',
+                border: '1px solid rgba(14,165,233,0.2)',
+                borderRadius: 16,
+                padding: '28px 24px',
+                marginBottom: 24,
+                textAlign: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: -30,
+                  right: -30,
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                }} />
+                <p style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+                  Your dedicated AI phone number
+                </p>
+                {telnyxNumber ? (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
+                      <span style={{ fontSize: 32, fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace', letterSpacing: '0.02em' }}>
+                        {telnyxNumber}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyNumber}
+                        style={{
+                          padding: '8px',
+                          borderRadius: 8,
+                          border: '1px solid rgba(14,165,233,0.3)',
+                          background: 'transparent',
+                          color: '#0ea5e9',
+                          cursor: 'pointer',
+                          transition: 'all 0.18s',
+                          display: 'flex',
+                        }}
+                      >
+                        {copied ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
+                      Calls to this number are handled by Amy
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0ea5e9', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                      <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>Provisioning your number...</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>
+                      We&apos;ll email you when it&apos;s ready — usually within a few minutes
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Options */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                  How to get Amy answering
+                </p>
+
+                {[
+                  {
+                    tag: 'Option A',
+                    title: 'Forward your existing number',
+                    desc: 'Keep your current number and forward calls to Amy. Your customers dial the same number as always.',
+                  },
+                  {
+                    tag: 'Option B',
+                    title: 'Use your AImie number directly',
+                    desc: 'Update your website, Google Business, and socials with the new number. Live immediately.',
+                  },
+                ].map((opt) => (
+                  <div
+                    key={opt.tag}
+                    style={{
+                      display: 'flex',
+                      gap: 14,
+                      padding: '14px 16px',
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 12,
+                    }}
+                  >
+                    <div style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: 'rgba(14,165,233,0.1)',
+                      border: '1px solid rgba(14,165,233,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: '#0ea5e9',
+                    }}>
+                      {opt.tag.split(' ')[1]}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 3 }}>{opt.title}</p>
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>{opt.desc}</p>
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{
+                  display: 'flex',
+                  gap: 12,
+                  padding: '14px 16px',
+                  background: 'rgba(14,165,233,0.04)',
+                  border: '1px solid rgba(14,165,233,0.12)',
+                  borderRadius: 12,
+                  alignItems: 'flex-start',
+                }}>
+                  <Phone size={14} color="#0ea5e9" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+                    Not sure which option? Our Melbourne team will walk you through it.{' '}
+                    <a href="tel:+61390226413" style={{ color: '#0ea5e9', fontWeight: 600, textDecoration: 'none' }}>
+                      +61 3 9022 6413
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 36,
+            paddingTop: 24,
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+          }}>
+            <button
+              type="button"
+              onClick={handleBack}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 18px',
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'transparent',
+                color: 'rgba(255,255,255,0.35)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.18s',
+                visibility: currentStep === 0 ? 'hidden' : 'visible',
+              }}
+            >
+              <ChevronLeft size={15} />
+              Back
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={saving || (currentStep === 0 && !businessName)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '11px 24px',
+                borderRadius: 10,
+                border: 'none',
+                background: currentStep === 3
+                  ? 'linear-gradient(135deg, #22c55e, #16a34a)'
+                  : 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                color: 'white',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                opacity: saving || (currentStep === 0 && !businessName) ? 0.4 : 1,
+                transition: 'opacity 0.18s',
+                letterSpacing: '0.01em',
+              }}
+            >
+              {saving ? (
+                <div style={{
+                  width: 14,
+                  height: 14,
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTop: '2px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 0.7s linear infinite',
+                }} />
+              ) : currentStep === 3 ? (
+                <>Enter dashboard <ArrowRight size={14} /></>
+              ) : (
+                <>Continue <ChevronRight size={14} /></>
+              )}
+            </button>
           </div>
-        )}
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-[rgba(255,255,255,0.06)]">
-          <button
-            type="button"
-            onClick={handleBack}
-            className={`flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg border border-[#1e3a5f] text-[#94a3b8] hover:border-[rgba(14,165,233,0.4)] hover:text-[#f0f9ff] transition-all ${
-              currentStep === 0 ? 'invisible' : ''
-            }`}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={saving || (currentStep === 0 && !businessName)}
-            className="flex items-center gap-2 text-sm font-bold px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] text-[#0a0a0a] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <div className="h-4 w-4 border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] rounded-full animate-spin" />
-            ) : currentStep === 3 ? (
-              <>Go to dashboard <Zap className="h-4 w-4" /></>
-            ) : (
-              <>Continue <ChevronRight className="h-4 w-4" /></>
-            )}
-          </button>
         </div>
-      </div>
 
-      <p className="text-xs text-[#334155] text-center">
-        Need help? Email{' '}
-        <a href="mailto:aimiesolutions@aimiesolutions.com" className="text-[#0ea5e9]">
-          aimiesolutions@aimiesolutions.com
-        </a>
-      </p>
+        {/* Footer */}
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)', marginTop: 40, textAlign: 'center' }}>
+          Need help?{' '}
+          <a href="mailto:aimiesolutions@aimiesolutions.com" style={{ color: 'rgba(14,165,233,0.6)', textDecoration: 'none' }}>
+            aimiesolutions@aimiesolutions.com
+          </a>
+        </p>
+      </div>
     </div>
   );
 }
