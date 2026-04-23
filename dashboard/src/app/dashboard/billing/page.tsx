@@ -90,14 +90,18 @@ export default function BillingPage() {
   const handleSubscribe = async () => {
     setLoadingCheckout(true);
     try {
+      // Use custom price from calculator if available
+      const storedPrice = sessionStorage.getItem('amy_custom_price');
+      const customAmount = storedPrice ? Number(storedPrice) : null;
+
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'professional' }),
+        body: JSON.stringify(customAmount ? { customAmount } : { plan: 'professional' }),
       });
       const d = await res.json();
       if (d.url) window.location.href = d.url;
-      else alert(d.error ?? 'Stripe not configured yet — contact aimiesolutions@aimiesolutions.com to get set up.');
+      else alert(d.error ?? 'Contact aimiesolutions@aimiesolutions.com to get set up.');
     } finally {
       setLoadingCheckout(false);
     }

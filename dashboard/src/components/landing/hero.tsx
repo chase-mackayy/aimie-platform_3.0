@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Phone, Zap } from 'lucide-react';
+import { Phone, Zap, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface HeroProps {
@@ -158,11 +158,11 @@ export function Hero({ onSignUp }: HeroProps) {
             </a>
           </div>
 
-          <div className="animate-fade-up" style={{ animationDelay: '0.6s', display: 'flex', gap: 16, marginBottom: 36, flexWrap: 'wrap', alignItems: 'center' }}>
-            {['14-day free trial', 'No setup fees', 'Cancel anytime'].map((item, i) => (
+          <div className="animate-fade-up" style={{ animationDelay: '0.6s', display: 'flex', gap: 20, marginBottom: 36, flexWrap: 'wrap', alignItems: 'center' }}>
+            {['No setup fees', 'Cancel anytime', 'Live in 48 hours'].map((item, i) => (
               <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
-                {i > 0 && <span style={{ color: 'rgba(255,255,255,0.15)', marginRight: 4 }}>·</span>}
-                <span style={{ color: '#22c55e' }}>✓</span> {item}
+                {i > 0 && <span style={{ color: 'rgba(255,255,255,0.1)', marginRight: 4 }}>·</span>}
+                <span style={{ color: '#22c55e', fontSize: 11 }}>✓</span> {item}
               </div>
             ))}
           </div>
@@ -224,6 +224,17 @@ export function Hero({ onSignUp }: HeroProps) {
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Response time</div>
           </FloatingCard>
         </div>
+      </div>
+
+      {/* Scroll indicator */}
+      <div style={{
+        position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+        animation: 'fadeIn 1s ease 2s both',
+        zIndex: 2,
+      }}>
+        <span style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', fontWeight: 500 }}>Scroll</span>
+        <ChevronDown size={16} color="rgba(255,255,255,0.2)" style={{ animation: 'float-sm 2s ease-in-out infinite' }} />
       </div>
     </section>
   );

@@ -8,7 +8,9 @@ const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://dashboard-seven-nu-97.vercel.app';
 
 const PRICE_IDS: Record<string, string> = {
-  professional: process.env.STRIPE_PRICE_PROFESSIONAL || 'price_professional_placeholder',
+  starter:      process.env.STRIPE_PRICE_STARTER      || process.env.STRIPE_PRICE_ID || '',
+  professional: process.env.STRIPE_PRICE_PROFESSIONAL || process.env.STRIPE_PRICE_ID || '',
+  growth:       process.env.STRIPE_PRICE_GROWTH       || process.env.STRIPE_PRICE_ID || '',
 };
 
 export async function POST(req: NextRequest) {
@@ -21,11 +23,14 @@ export async function POST(req: NextRequest) {
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
+
+    // Dynamic pricing — custom amount passed from calculator
+    const customAmount: number | null = body.customAmount ?? null; // in AUD dollars
     const plan = body.plan ?? 'professional';
     const priceId = PRICE_IDS[plan];
 
-    if (!priceId || priceId.includes('placeholder')) {
-      return NextResponse.json({ error: 'Stripe prices not configured yet' }, { status: 503 });
+    if (!customAmount && !priceId) {
+      return NextResponse.json({ error: 'Stripe price not configured' }, { status: 503 });
     }
 
     const Stripe = (await import('stripe')).default;
@@ -52,15 +57,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Build line items — either dynamic price or fixed price ID
+    const lineItems = customAmount
+      ? [{
+          price_data: {
+            currency: 'aud',
+            product_data: {
+              name: 'Amy Solutions — AI Receptionist',
+              description: 'Unlimited calls & SMS · 24/7 AI receptionist · Cancel anytime',
+            },
+            unit_amount: Math.round(customAmount * 100), // cents
+            recurring: { interval: 'month' as const },
+          },
+          quantity: 1,
+        }]
+      : [{ price: priceId!, quantity: 1 }];
+
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
+      currency: 'aud',
+      line_items: lineItems,
       success_url: `${APP_URL}/dashboard/onboarding?subscribed=1`,
       cancel_url: `${APP_URL}/?cancelled=1`,
-      // Pass userId in metadata so the webhook can provision the business
-      metadata: { userId: session.user.id },
+      allow_promotion_codes: true,
+      metadata: { userId: session.user.id, customAmount: customAmount?.toString() ?? '' },
       subscription_data: {
         trial_period_days: 14,
         metadata: { userId: session.user.id },

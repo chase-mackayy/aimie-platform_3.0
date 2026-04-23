@@ -8,9 +8,10 @@ import { Menu, X } from 'lucide-react';
 interface NavbarProps {
   onSignIn: () => void;
   onSignUp: () => void;
+  onLogoClick?: () => void;
 }
 
-export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
+export function Navbar({ onSignIn, onSignUp, onLogoClick }: NavbarProps) {
   const [visible, setVisible] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -56,16 +57,32 @@ export function Navbar({ onSignIn, onSignUp }: NavbarProps) {
         }}
       >
         {/* Logo */}
-        <a href="/" className="flex items-center shrink-0">
+        <button
+          onClick={onLogoClick}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+          title="Click me"
+        >
           <Image
             src="/logo-icon.jpeg"
             alt="AImie"
             width={42}
             height={42}
             unoptimized
-            style={{ mixBlendMode: 'screen', filter: 'drop-shadow(0 0 10px rgba(14,165,233,0.5))' }}
+            style={{
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 10px rgba(14,165,233,0.5))',
+              transition: 'filter 0.3s ease, transform 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLImageElement).style.filter = 'drop-shadow(0 0 20px rgba(14,165,233,0.9)) drop-shadow(0 0 40px rgba(14,165,233,0.5))';
+              (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.1) rotate(-5deg)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLImageElement).style.filter = 'drop-shadow(0 0 10px rgba(14,165,233,0.5))';
+              (e.currentTarget as HTMLImageElement).style.transform = 'scale(1) rotate(0deg)';
+            }}
           />
-        </a>
+        </button>
 
         {/* Center nav — desktop */}
         <div className="hidden md:flex items-center gap-8">

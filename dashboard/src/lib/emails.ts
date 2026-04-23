@@ -1,6 +1,7 @@
 import { resend } from './resend';
 
-const FROM = 'AImie Solutions <hello@aimiesolutions.com>';
+const FROM = 'Amy Solutions <hello@aimiesolutions.com>';
+const TEAM_EMAIL = 'aimiesolutions@aimiesolutions.com';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://dashboard-seven-nu-97.vercel.app';
 
 export async function sendWelcomeEmail(
@@ -25,7 +26,8 @@ export async function sendWelcomeEmail(
   await resend.emails.send({
     from: FROM,
     to,
-    subject: 'Welcome to AImie — complete your setup',
+    bcc: TEAM_EMAIL,
+    subject: 'Welcome to Amy Solutions — complete your setup',
     html: `
 <!DOCTYPE html>
 <html>
@@ -128,6 +130,7 @@ export async function sendCallSummaryEmail(
   await resend.emails.send({
     from: FROM,
     to,
+    bcc: TEAM_EMAIL,
     subject: `Amy handled a call — ${businessName}`,
     html: `
 <!DOCTYPE html>
@@ -208,6 +211,7 @@ export async function sendFirstCallEmail(
   await resend.emails.send({
     from: FROM,
     to,
+    bcc: TEAM_EMAIL,
     subject: 'Amy just handled her first call — here\'s the transcript',
     html: `
 <!DOCTYPE html>

@@ -78,7 +78,7 @@ import { FeaturesSection } from '@/components/landing/features-section';
 import { IndustriesSection } from '@/components/landing/industries-section';
 import { HowItWorks } from '@/components/landing/how-it-works';
 import { Testimonials } from '@/components/landing/testimonials';
-import { PricingSection } from '@/components/landing/pricing-section';
+import { PricingCalculator } from '@/components/landing/pricing-calculator';
 import { FinalCTA } from '@/components/landing/final-cta';
 import { Footer } from '@/components/landing/footer';
 
@@ -179,12 +179,113 @@ function CursorGlow() {
   );
 }
 
+/* ─── Logo flight animation ─── */
+function LogoFlight({ active, onDone }: { active: boolean; onDone: () => void }) {
+  useEffect(() => {
+    if (!active) return;
+    const t = setTimeout(onDone, 2600);
+    return () => clearTimeout(t);
+  }, [active, onDone]);
+
+  if (!active) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 99998,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0)',
+      animation: 'logo-flight-bg 2.6s cubic-bezier(0.16,1,0.3,1) forwards',
+      pointerEvents: 'none',
+    }}>
+      <style>{`
+        @keyframes logo-flight-bg {
+          0%   { background: rgba(0,0,0,0); }
+          15%  { background: rgba(0,0,0,0.92); }
+          75%  { background: rgba(0,0,0,0.92); }
+          100% { background: rgba(0,0,0,0); }
+        }
+        @keyframes logo-fly {
+          0%   { transform: scale(0.4) translateY(40vh); opacity: 0; filter: blur(8px); }
+          20%  { transform: scale(1.1) translateY(0); opacity: 1; filter: blur(0px); }
+          40%  { transform: scale(1) translateY(0); opacity: 1; }
+          70%  { transform: scale(1.05) translateY(0); opacity: 1; filter: drop-shadow(0 0 60px rgba(14,165,233,1)) drop-shadow(0 0 120px rgba(14,165,233,0.6)); }
+          85%  { transform: scale(0.2) translateY(-60vh); opacity: 0; filter: blur(20px); }
+          100% { transform: scale(0.2) translateY(-60vh); opacity: 0; }
+        }
+      `}</style>
+      <div style={{ animation: 'logo-fly 2.6s cubic-bezier(0.16,1,0.3,1) forwards', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+        <Image src="/logo-icon.jpeg" alt="Amy" width={120} height={120} unoptimized
+          style={{ borderRadius: '50%', mixBlendMode: 'screen', border: '2px solid rgba(14,165,233,0.6)', boxShadow: '0 0 80px rgba(14,165,233,0.8), 0 0 160px rgba(14,165,233,0.4)' }} />
+        <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>
+          Amy Solutions
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Floating CTA ─── */
+function FloatingCTA({ onSignUp }: { onSignUp: () => void }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const handler = () => setVisible(window.scrollY > 500);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 28, right: 24, zIndex: 9990,
+      display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10,
+      opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(16px)',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      pointerEvents: visible ? 'auto' : 'none',
+    }}>
+      <a href="tel:+61390226413" style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        background: 'rgba(10,10,10,0.95)', border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 40, padding: '10px 18px',
+        color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
+        backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        transition: 'all 0.2s',
+      }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'rgba(14,165,233,0.4)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+      >
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', display: 'inline-block', flexShrink: 0 }} />
+        Call Amy now
+      </a>
+      <button onClick={onSignUp} className="electric-btn" style={{
+        background: '#0ea5e9', color: 'white',
+        border: 'none', borderRadius: 40, padding: '12px 24px',
+        fontSize: 14, fontWeight: 700, cursor: 'pointer',
+        boxShadow: '0 8px 32px rgba(14,165,233,0.35)',
+      }}>
+        Get Started Free →
+      </button>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const [logoFlying, setLogoFlying] = useState(false);
+  const [customPrice, setCustomPrice] = useState<number | null>(null);
 
   const openSignUp = () => { setAuthMode('signup'); setAuthOpen(true); };
   const openSignIn = () => { setAuthMode('signin'); setAuthOpen(true); };
+
+  const handleCalculatorSignUp = (price: number, industry: string, calls: number) => {
+    setCustomPrice(price);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('amy_custom_price', String(price));
+      sessionStorage.setItem('amy_industry', industry);
+      sessionStorage.setItem('amy_calls', String(calls));
+    }
+    openSignUp();
+  };
+  const triggerLogoFlight = () => { if (!logoFlying) setLogoFlying(true); };
 
   // Scroll-reveal observer
   useEffect(() => {
@@ -204,7 +305,8 @@ export default function LandingPage() {
       <FloatingParticles />
       <PageEntrance />
       <CursorGlow />
-      <Navbar onSignIn={openSignIn} onSignUp={openSignUp} />
+      <LogoFlight active={logoFlying} onDone={() => setLogoFlying(false)} />
+      <Navbar onSignIn={openSignIn} onSignUp={openSignUp} onLogoClick={triggerLogoFlight} />
       <Hero onSignUp={openSignUp} />
       <Ticker />
       <StatsBar />
@@ -213,9 +315,10 @@ export default function LandingPage() {
       <IndustriesSection />
       <HowItWorks />
       <Testimonials />
-      <PricingSection onSignUp={openSignUp} />
+      <PricingCalculator onSignUp={handleCalculatorSignUp} />
       <FinalCTA onSignUp={openSignUp} />
       <Footer />
+      <FloatingCTA onSignUp={openSignUp} />
 
       <AuthModal
         isOpen={authOpen}
