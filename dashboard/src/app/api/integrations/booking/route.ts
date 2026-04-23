@@ -151,6 +151,7 @@ async function bookViaEmail(
 
     await resend.emails.send({
       from: 'Amy Solutions <hello@aimiesolutions.com>',
+      replyTo: 'chasemackaynba@gmail.com',
       to,
       subject: `New booking request — ${body.customer_name}`,
       html: `

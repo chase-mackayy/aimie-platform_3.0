@@ -24,7 +24,8 @@ export const auth = betterAuth({
       otpOptions: {
         async sendOTP({ user, otp }) {
           await resend.emails.send({
-            from: 'AImie Solutions <hello@aimiesolutions.com>',
+            from: 'Amy Solutions <hello@aimiesolutions.com>',
+            replyTo: 'chasemackaynba@gmail.com',
             to: user.email,
             subject: 'Your AImie login code',
             html: `
@@ -58,7 +59,8 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       await resend.emails.send({
-        from: 'AImie Solutions <hello@aimiesolutions.com>',
+        from: 'Amy Solutions <hello@aimiesolutions.com>',
+            replyTo: 'chasemackaynba@gmail.com',
         to: user.email,
         subject: 'Verify your AImie account',
         html: `
@@ -86,7 +88,8 @@ export const auth = betterAuth({
     },
     sendResetPasswordEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       await resend.emails.send({
-        from: 'AImie Solutions <hello@aimiesolutions.com>',
+        from: 'Amy Solutions <hello@aimiesolutions.com>',
+            replyTo: 'chasemackaynba@gmail.com',
         to: user.email,
         subject: 'Reset your AImie password',
         html: `

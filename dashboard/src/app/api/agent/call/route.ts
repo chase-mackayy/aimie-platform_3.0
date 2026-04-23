@@ -131,6 +131,7 @@ async function sendBookingNotificationEmail(
 ) {
   await resend.emails.send({
     from: 'Amy Solutions <hello@aimiesolutions.com>',
+      replyTo: 'chasemackaynba@gmail.com',
     to: ADMIN_EMAIL,
     subject: `New discovery call booked — ${booking.full_name} from ${booking.business_name}`,
     html: `
