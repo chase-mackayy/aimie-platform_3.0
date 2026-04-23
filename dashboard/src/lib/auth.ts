@@ -119,6 +119,25 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     },
   },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            await resend.emails.send({
+              from: 'Amy Solutions <hello@aimiesolutions.com>',
+              to: user.email,
+              bcc: 'aimiesolutions@aimiesolutions.com',
+              subject: 'Welcome to Amy Solutions 👋',
+              html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;background:#0a0a0a;"><div style="text-align:center;margin-bottom:32px;"><div style="display:inline-block;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.25);border-radius:12px;padding:12px 24px;"><span style="font-size:20px;font-weight:800;color:white;letter-spacing:-0.03em;">Amy<span style="color:#0ea5e9;">.</span></span></div></div><div style="background:#0f0f0f;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:36px;"><h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:white;">Welcome${user.name ? `, ${user.name.split(' ')[0]}` : ''} 👋</h1><p style="margin:0 0 24px;font-size:15px;color:rgba(255,255,255,0.5);line-height:1.7;">Your Amy Solutions account is live. Complete your setup and get Amy answering every call for your business in under 5 minutes.</p><div style="text-align:center;margin:28px 0;"><a href="${APP_URL}/dashboard/onboarding" style="display:inline-block;background:#0ea5e9;color:white;font-weight:700;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:10px;">Complete Setup →</a></div></div><p style="text-align:center;font-size:12px;color:rgba(255,255,255,0.2);margin-top:24px;">Amy Solutions · Melbourne, Australia</p></div>`,
+            });
+          } catch (e) {
+            console.error('Signup welcome email failed:', e);
+          }
+        },
+      },
+    },
+  },
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: APP_URL,
   trustedOrigins: [

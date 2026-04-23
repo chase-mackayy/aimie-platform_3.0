@@ -282,8 +282,8 @@ export function PricingCalculator({ onSignUp }: Props) {
                 >
                   <span style={{ fontSize: 32, display: 'block', lineHeight: 1 }}>{ind.icon}</span>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 3 }}>{ind.label}</div>
-                    <div style={{ fontSize: 11, color: `${ind.color}`, fontWeight: 500 }}>{ind.role}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', marginBottom: 3 }}>{ind.label}</div>
+                    <div style={{ fontSize: 11, color: ind.color, fontWeight: 600 }}>{ind.role}</div>
                   </div>
                 </button>
               ))}
