@@ -18,6 +18,12 @@ export const auth = betterAuth({
       twoFactor: schema.twoFactors,
     },
   }),
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_OAUTH_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || '',
+    },
+  },
   plugins: [
     twoFactor({
       issuer: 'AImie Solutions',
