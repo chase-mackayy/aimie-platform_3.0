@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, timestamp, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, boolean, timestamp, integer, jsonb, decimal } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -60,13 +60,21 @@ export const calls = pgTable('calls', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   businessId: text('business_id').references(() => businesses.id),
   callerNumber: text('caller_number'),
-  duration: integer('duration'),
-  outcome: text('outcome'),
+  duration: integer('duration'),                       // legacy — seconds
+  outcome: text('outcome'),                            // booking_made | enquiry_only | not_interested | no_answer | voicemail | other | booked | info
   sentiment: text('sentiment'),
   transcript: text('transcript'),
   summary: text('summary'),
   recordingUrl: text('recording_url'),
   createdAt: timestamp('created_at').defaultNow(),
+  // ── New rich fields ────────────────────────────────────
+  callStartedAt: timestamp('call_started_at'),
+  callEndedAt: timestamp('call_ended_at'),
+  callDurationSeconds: integer('call_duration_seconds'),
+  estimatedRevenue: decimal('estimated_revenue', { precision: 10, scale: 2 }),
+  followUpRequired: boolean('follow_up_required').default(false),
+  bookingDate: timestamp('booking_date'),
+  bookingType: text('booking_type'),
 });
 
 export const bookings = pgTable('bookings', {
@@ -79,6 +87,13 @@ export const bookings = pgTable('bookings', {
   scheduledAt: timestamp('scheduled_at'),
   status: text('status').default('pending'),
   createdAt: timestamp('created_at').defaultNow(),
+  // ── New fields ─────────────────────────────────────────
+  patientName: text('patient_name'),
+  patientPhone: text('patient_phone'),
+  bookingPlatform: text('booking_platform'),
+  bookingDate: timestamp('booking_date'),
+  bookingType: text('booking_type'),
+  confirmed: boolean('confirmed').default(false),
 });
 
 export const agentSettings = pgTable('agent_settings', {

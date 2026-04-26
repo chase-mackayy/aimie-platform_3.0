@@ -14,8 +14,9 @@ export async function GET(req: NextRequest) {
     if (!business) return NextResponse.json({ calls: [] });
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search') ?? '';
+    const search  = searchParams.get('search')  ?? '';
     const outcome = searchParams.get('outcome') ?? 'all';
+    const limit   = Math.min(parseInt(searchParams.get('limit') ?? '200'), 500);
 
     const conditions = [eq(calls.businessId, business.id)];
     if (outcome !== 'all') conditions.push(eq(calls.outcome, outcome));
@@ -23,7 +24,8 @@ export async function GET(req: NextRequest) {
       conditions.push(
         or(
           ilike(calls.callerNumber, `%${search}%`),
-          ilike(calls.summary, `%${search}%`)
+          ilike(calls.summary, `%${search}%`),
+          ilike(calls.transcript, `%${search}%`),
         )!
       );
     }
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
       .from(calls)
       .where(and(...conditions))
       .orderBy(desc(calls.createdAt))
-      .limit(100);
+      .limit(limit);
 
     return NextResponse.json({ calls: rows });
   } catch {
@@ -41,7 +43,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Called by the AI voice agent after each call completes
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
@@ -56,18 +57,17 @@ export async function POST(req: NextRequest) {
     const [created] = await db
       .insert(calls)
       .values({
-        businessId: business.id,
+        businessId:   business.id,
         callerNumber: callerNumber ?? 'Unknown',
-        duration: typeof duration === 'number' ? duration : null,
-        outcome: outcome ?? 'info',
-        sentiment: sentiment ?? 'neutral',
-        transcript: transcript ?? null,
-        summary: summary ?? null,
+        duration:     typeof duration === 'number' ? duration : null,
+        outcome:      outcome  ?? 'enquiry_only',
+        sentiment:    sentiment ?? 'neutral',
+        transcript:   transcript ?? null,
+        summary:      summary ?? null,
         recordingUrl: recordingUrl ?? null,
       })
       .returning();
 
-    // Look up user email for notifications
     const [user] = await db
       .select({ email: users.email })
       .from(users)
@@ -78,30 +78,19 @@ export async function POST(req: NextRequest) {
       const callData = {
         businessName: business.name,
         callerNumber: callerNumber ?? 'Unknown',
-        duration: typeof duration === 'number' ? duration : null,
-        transcript: transcript ?? null,
-        summary: summary ?? null,
-        outcome: outcome ?? 'info',
+        duration:     typeof duration === 'number' ? duration : null,
+        transcript:   transcript ?? null,
+        summary:      summary ?? null,
+        outcome:      outcome ?? 'enquiry_only',
       };
-
-      // First call — send special first-call email
       if (!business.firstCallEmailSent) {
-        const [{ total }] = await db
-          .select({ total: count() })
-          .from(calls)
-          .where(eq(calls.businessId, business.id));
-
+        const [{ total }] = await db.select({ total: count() }).from(calls).where(eq(calls.businessId, business.id));
         if (total === 1) {
-          sendFirstCallEmail(user.email, callData)
-            .catch((err) => console.error('First-call email failed:', err));
-          await db.update(businesses)
-            .set({ firstCallEmailSent: true })
-            .where(eq(businesses.id, business.id));
+          sendFirstCallEmail(user.email, callData).catch(console.error);
+          await db.update(businesses).set({ firstCallEmailSent: true }).where(eq(businesses.id, business.id));
         }
       } else {
-        // Send call summary on every subsequent call (non-blocking)
-        sendCallSummaryEmail(user.email, callData)
-          .catch((err) => console.error('Call summary email failed:', err));
+        sendCallSummaryEmail(user.email, callData).catch(console.error);
       }
     }
 
